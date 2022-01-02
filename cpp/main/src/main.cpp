@@ -21,9 +21,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	MainWindow w;
-	w.show();
-	w.activateWindow();
+	MainWindow *w = new MainWindow;
+	w->show();
+	w->activateWindow();
 
 	return a.exec();
 }

@@ -17,6 +17,7 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools REQUIRED)
 set(QSCINTILLA ../qscintilla)
 include_directories(${QSCINTILLA}/include)
 link_directories(${QSCINTILLA})
+add_definitions(-D QSCINTILLA_DLL)
 
 file(GLOB_RECURSE TS_FILES ./ts/*.xml)
 file(GLOB_RECURSE CPP_FILES ./src/*.cpp ./src/*.h ./src/*.ui)

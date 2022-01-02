@@ -11,7 +11,11 @@ public:
 	~MainWindow();
 
 protected:
-	virtual void mouseDoubleClickEvent(QMouseEvent *event);
+	virtual void closeEvent(QCloseEvent *) override;
+
+private slots:
+	void codeLineChange();
+	void actionNewFile();
 
 private:
 	Ui::MainWindow *ui;

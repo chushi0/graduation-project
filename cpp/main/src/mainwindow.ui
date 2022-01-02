@@ -6,39 +6,75 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>493</width>
-    <height>369</height>
+    <width>795</width>
+    <height>575</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Visual YACC</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
+  <widget class="QWidget" name="widget">
+   <layout class="QGridLayout" name="_2">
     <item row="0" column="0">
-     <widget class="QLabel" name="label">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>1</verstretch>
-       </sizepolicy>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
       </property>
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; font-weight:700;&quot;&gt;WIP: Nothing Now&lt;/span&gt;&lt;/p&gt;&lt;p&gt;but you can double click here to show &lt;span style=&quot; font-style:italic;&quot;&gt;hello world&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QLabel" name="label_2">
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;See also &lt;a href=&quot;https://github.com/chushi0/graduation-project&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://github.com/chushi0/graduation-project&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="openExternalLinks">
-       <bool>true</bool>
-      </property>
+      <widget class="QSplitter" name="splitter_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QWidget" name="gridLayoutWidget">
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>终结符：</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QListWidget" name="terminalList">
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_2">
+        <layout class="QGridLayout" name="gridLayout_6">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>非终结符：</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QListWidget" name="nonterminalList">
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QsciScintilla" name="codeView" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>4</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -48,13 +84,210 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>493</width>
+     <width>795</width>
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <addaction name="actionNewFile"/>
+    <addaction name="actionOpenFile"/>
+    <addaction name="actionSaveFile"/>
+    <addaction name="actionSaveAsFile"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menubianji">
+    <property name="title">
+     <string>编辑</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+   </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>生成</string>
+    </property>
+    <addaction name="actionCodeLL"/>
+    <addaction name="separator"/>
+    <addaction name="actionCodeLR0"/>
+    <addaction name="actionCodeLR1"/>
+    <addaction name="actionCodeSLR"/>
+    <addaction name="actionCodeLALR"/>
+   </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>演示</string>
+    </property>
+    <widget class="QMenu" name="menu_4">
+     <property name="title">
+      <string>演示自动机生成算法</string>
+     </property>
+     <addaction name="actionAlogLL"/>
+     <addaction name="actionAlogLR0"/>
+     <addaction name="actionAlogLR1"/>
+     <addaction name="actionAlogSLR"/>
+     <addaction name="actionAlogLALR"/>
+    </widget>
+    <widget class="QMenu" name="menu_5">
+     <property name="title">
+      <string>演示自动机</string>
+     </property>
+     <addaction name="actionFALL"/>
+     <addaction name="actionFALR0"/>
+     <addaction name="actionFALR1"/>
+     <addaction name="actionFASLR"/>
+     <addaction name="actionFALALR"/>
+    </widget>
+    <addaction name="menu_4"/>
+    <addaction name="menu_5"/>
+   </widget>
+   <addaction name="menu"/>
+   <addaction name="menubianji"/>
+   <addaction name="menu_2"/>
+   <addaction name="menu_3"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionNewFile">
+   <property name="text">
+    <string>新建</string>
+   </property>
+  </action>
+  <action name="actionOpenFile">
+   <property name="text">
+    <string>打开</string>
+   </property>
+  </action>
+  <action name="actionSaveFile">
+   <property name="text">
+    <string>保存</string>
+   </property>
+  </action>
+  <action name="actionSaveAsFile">
+   <property name="text">
+    <string>另存为</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>退出</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>撤销</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>重做</string>
+   </property>
+  </action>
+  <action name="actionCodeLL">
+   <property name="text">
+    <string>生成 LL 代码</string>
+   </property>
+  </action>
+  <action name="actionCodeLR0">
+   <property name="text">
+    <string>生成 LR(0) 代码</string>
+   </property>
+  </action>
+  <action name="actionCodeLR1">
+   <property name="text">
+    <string>生成 LR(1) 代码</string>
+   </property>
+  </action>
+  <action name="actionCodeSLR">
+   <property name="text">
+    <string>生成 SLR 代码</string>
+   </property>
+  </action>
+  <action name="actionCodeLALR">
+   <property name="text">
+    <string>生成 LALR 代码</string>
+   </property>
+  </action>
+  <action name="actionyanshi_lr_0_zidongji">
+   <property name="text">
+    <string>yanshi lr(0) zidongji</string>
+   </property>
+  </action>
+  <action name="actionlr_1">
+   <property name="text">
+    <string>lr(1)</string>
+   </property>
+  </action>
+  <action name="actionslr">
+   <property name="text">
+    <string>slr</string>
+   </property>
+  </action>
+  <action name="actionlalr">
+   <property name="text">
+    <string>lalr</string>
+   </property>
+  </action>
+  <action name="actionAlogLL">
+   <property name="text">
+    <string>LL</string>
+   </property>
+  </action>
+  <action name="actionAlogLR0">
+   <property name="text">
+    <string>LR(0)</string>
+   </property>
+  </action>
+  <action name="actionAlogLR1">
+   <property name="text">
+    <string>LR(1)</string>
+   </property>
+  </action>
+  <action name="actionAlogSLR">
+   <property name="text">
+    <string>SLR</string>
+   </property>
+  </action>
+  <action name="actionAlogLALR">
+   <property name="text">
+    <string>LALR</string>
+   </property>
+  </action>
+  <action name="actionFALL">
+   <property name="text">
+    <string>LL</string>
+   </property>
+  </action>
+  <action name="actionFALR0">
+   <property name="text">
+    <string>LR(0)</string>
+   </property>
+  </action>
+  <action name="actionFALR1">
+   <property name="text">
+    <string>LR(1)</string>
+   </property>
+  </action>
+  <action name="actionFASLR">
+   <property name="text">
+    <string>SLR</string>
+   </property>
+  </action>
+  <action name="actionFALALR">
+   <property name="text">
+    <string>LALR</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QsciScintilla</class>
+   <extends>QWidget</extends>
+   <header>Qsci/qsciscintilla.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
