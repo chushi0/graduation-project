@@ -1,4 +1,5 @@
 #include "base.h"
+#include <QJsonDocument>
 #include <QMutex>
 #include <QTextStream>
 
@@ -37,8 +38,18 @@ void ipc::SendLogMessage(QString msg) {
 	stderrStream->flush();
 }
 
-QString ipc::RpcRequest(QString req) {
+ipc::Response ipc::RpcRequest(QString req) {
 	QMutexLocker locker(mutex);
 	SendRpcMessage(req);
-	return ReceiveRpcMessage();
+	QString resp = ReceiveRpcMessage();
+	locker.unlock();
+	QJsonParseError err;
+	auto doc = QJsonDocument::fromJson(resp.toUtf8(), &err);
+	if (err.error != QJsonParseError::NoError) {
+		throw err.errorString();
+	}
+	Response response;
+	response.ResponseCode = doc.object()["code"].toInt();
+	response.Data = doc.object()["data"].toObject();
+	return response;
 }
