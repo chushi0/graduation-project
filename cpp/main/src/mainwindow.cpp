@@ -16,14 +16,13 @@ MainWindow::MainWindow(QWidget *parent)
 	font.setPointSize(12);
 	ui->codeView->setFont(font);
 	ui->codeView->setMarginsFont(font);
-	ui->codeView->setMarginWidth(0, "00");
+	ui->codeView->setMarginWidth(0, "000");
 	ui->codeView->setMarginLineNumbers(0, true);
 	ui->codeView->setWrapMode(QsciScintilla::WrapNone);
 	ui->codeView->setEolMode(QsciScintilla::EolUnix);
 	ui->codeView->setWhitespaceVisibility(QsciScintilla::WsInvisible);
-	ui->codeView->setIndentationsUseTabs(true);
+	ui->codeView->setIndentationsUseTabs(false);
 	ui->codeView->setTabWidth(4);
-	ui->codeView->setBraceMatching(QsciScintilla::SloppyBraceMatch);
 	ui->codeView->setCaretLineVisible(true);
 
 	connect(ui->codeView, &QsciScintilla::linesChanged, this,
@@ -45,6 +44,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 void MainWindow::codeLineChange() {
 	auto lineCount = ui->codeView->lines();
+	if (lineCount < 10) {
+		lineCount = 10;
+	}
 	ui->codeView->setMarginWidth(0, QString("0%1").arg(lineCount));
 }
 
