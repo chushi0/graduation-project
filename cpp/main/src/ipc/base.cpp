@@ -2,12 +2,12 @@
 #include <QMutex>
 #include <QTextStream>
 
-namespace rpc {
+namespace ipc {
 	QTextStream *stdinStream, *stdoutStream, *stderrStream;
 	QMutex *mutex;
-} // namespace rpc
+} // namespace ipc
 
-void rpc::Init() {
+void ipc::Init() {
 	stdinStream = new QTextStream(stdin);
 	stdoutStream = new QTextStream(stdout);
 	stderrStream = new QTextStream(stderr);
@@ -19,7 +19,7 @@ void rpc::Init() {
 	mutex = new QMutex();
 }
 
-QString rpc::ReceiveRpcMessage() {
+QString ipc::ReceiveRpcMessage() {
 	QString msg;
 	do {
 		msg = stdinStream->readLine();
@@ -27,17 +27,17 @@ QString rpc::ReceiveRpcMessage() {
 	return msg;
 }
 
-void rpc::SendRpcMessage(QString msg) {
+void ipc::SendRpcMessage(QString msg) {
 	*stdoutStream << msg << "\n";
 	stdoutStream->flush();
 }
 
-void rpc::SendLogMessage(QString msg) {
+void ipc::SendLogMessage(QString msg) {
 	*stderrStream << msg << "\n";
 	stderrStream->flush();
 }
 
-QString rpc::RpcRequest(QString req) {
+QString ipc::RpcRequest(QString req) {
 	QMutexLocker locker(mutex);
 	SendRpcMessage(req);
 	return ReceiveRpcMessage();

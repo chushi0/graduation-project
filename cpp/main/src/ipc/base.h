@@ -1,10 +1,10 @@
 #include <QString>
 
-namespace rpc {
+namespace ipc {
 	void Init();
 	QString ReceiveRpcMessage();
 	void SendRpcMessage(QString);
 	void SendLogMessage(QString);
 
 	QString RpcRequest(QString);
-} // namespace rpc
+} // namespace ipc

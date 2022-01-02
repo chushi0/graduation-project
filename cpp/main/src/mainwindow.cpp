@@ -1,6 +1,6 @@
 #include "mainwindow.h"
-#include "rpc/base.h"
-#include "rpc/rpc.h"
+#include "ipc/base.h"
+#include "ipc/ipc.h"
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -13,7 +13,7 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
-	rpc::SendLogMessage("user click");
-	auto msg = rpc::Hello();
-	QMessageBox::information(this, "rpc::Hello", msg);
+	ipc::SendLogMessage("user click");
+	auto msg = ipc::Hello();
+	QMessageBox::information(this, "ipc::Hello", msg);
 }

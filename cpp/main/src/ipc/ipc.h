@@ -1,5 +1,5 @@
 #include <QString>
 
-namespace rpc {
+namespace ipc {
 	QString Hello();
 }

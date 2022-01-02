@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 
-#include "rpc/base.h"
+#include "ipc/base.h"
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
@@ -9,7 +9,7 @@
 int main(int argc, char *argv[]) {
 	QApplication a(argc, argv);
 
-	rpc::Init();
+	ipc::Init();
 
 	QTranslator translator;
 	const QStringList uiLanguages = QLocale::system().uiLanguages();

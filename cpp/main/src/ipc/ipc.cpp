@@ -1,9 +1,9 @@
-#include "rpc.h"
+#include "ipc.h"
 #include "base.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 
-QString rpc::Hello() {
+QString ipc::Hello() {
 	auto req = "{\"action\":\"hello\",\"data\":{}}";
 	auto resp = RpcRequest(req);
 	QJsonParseError err;
