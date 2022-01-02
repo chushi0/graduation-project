@@ -1,4 +1,11 @@
 @echo off
+if defined INSTALL_PATH (
+    echo=
+) else (
+    echo Run env.bat first!
+    exit /B 1
+)
+
 set WORKSPACE=%cd%
 
 del /F /S /Q "%INSTALL_PATH%" > NUL 2> NUL
