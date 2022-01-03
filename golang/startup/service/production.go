@@ -45,7 +45,7 @@ func ProductionParseRequest(req json.RawMessage) (code int, resp interface{}, er
 		ID string `json:"id"`
 	}
 	respStruct.ID = id
-	resp, err = json.Marshal(respStruct)
+	resp = respStruct
 	return
 }
 
@@ -66,7 +66,7 @@ func ProductionParseQuery(req json.RawMessage) (code int, resp interface{}, err 
 		code = 1002
 		return
 	}
-	resp, err = json.Marshal(proc.Result)
+	resp = proc.Result
 	delete(productionParse, reqStruct.ID)
 	return
 }
