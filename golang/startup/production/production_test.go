@@ -11,7 +11,7 @@ func TestProduction(t *testing.T) {
 	E := E + E
 	| E - E
 	| (E)
-	`)
+	`, nil)
 	if len(e.Errors) > 0 {
 		t.Fail()
 	}

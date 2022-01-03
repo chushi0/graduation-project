@@ -10,10 +10,6 @@ type Service = func(req json.RawMessage) (code int, resp interface{}, err error)
 
 var services map[string]Service = make(map[string]Service)
 
-func Init() {
-
-}
-
 func CallService(rawReq []byte) (rawResp []byte, err error) {
 	defer func() {
 		if errRecover := recover(); errRecover != nil {

@@ -24,7 +24,7 @@ func init() {
 	fa = identify.MergeOr(product).MergeOr(asciiSymbol).MergeOr(escape).AsDFA()
 }
 
-func ParseProduction(code string) ([]Production, *ErrorContainer) {
+func ParseProduction(code string, interruptFlag *bool) ([]Production, *ErrorContainer) {
 	lexer := &Lexer{
 		ErrorContainer: NewErrorContainer(),
 		Io:             NewIOFromString(code),
@@ -38,6 +38,9 @@ func ParseProduction(code string) ([]Production, *ErrorContainer) {
 	productionProductSymbol := false
 	var startToken *Token = nil
 	for {
+		if interruptFlag != nil && *interruptFlag {
+			return nil, nil
+		}
 		token := lexer.NextToken()
 		if token == nil {
 			break

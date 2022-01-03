@@ -32,8 +32,6 @@ func main() {
 	defer logFile.Close()
 	log.SetOutput(logFile)
 
-	service.Init()
-
 	proc := exec.Command("main")
 	stdin, _ := proc.StdinPipe()
 	stdout, _ := proc.StdoutPipe()
