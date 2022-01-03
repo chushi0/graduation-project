@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"io"
 	"log"
 	"os"
@@ -13,6 +14,8 @@ import (
 var (
 	rpcinChannel  chan []byte
 	rpcoutChannel chan []byte
+
+	logFile = flag.Bool("log", false, "记录日志")
 )
 
 func init() {
@@ -25,12 +28,14 @@ func main() {
 		log.Println("Process Exit")
 	}()
 
-	logFile, err := os.Create("golang-log.log")
-	if err != nil {
-		log.Fatal(err)
+	if *logFile {
+		logFile, err := os.Create("golang-log.log")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer logFile.Close()
+		log.SetOutput(logFile)
 	}
-	defer logFile.Close()
-	log.SetOutput(logFile)
 
 	proc := exec.Command("main")
 	stdin, _ := proc.StdinPipe()
