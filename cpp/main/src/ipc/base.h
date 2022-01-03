@@ -13,5 +13,5 @@ namespace ipc {
 	void SendRpcMessage(QString);
 	void SendLogMessage(QString);
 
-	Response RpcRequest(QString);
+	ipc::Response RpcRequest(QString);
 } // namespace ipc
