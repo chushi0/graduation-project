@@ -28,6 +28,7 @@ func main() {
 		log.Println("Process Exit")
 	}()
 
+	var err error
 	if *logFile {
 		logFile, err := os.Create("golang-log.log")
 		if err != nil {
