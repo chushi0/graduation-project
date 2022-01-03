@@ -14,7 +14,7 @@ func init() {
 	identify := NewFinateAutomatonFromRegexpOrPanic([]rune("([a-z]|[A-Z]|[0-9]|\\_)([a-z]|[A-Z]|[0-9]|\\_|\\')*"))
 	product := NewFinateAutomatonFromRegexpOrPanic([]rune(":="))
 	asciiSymbol := NewFinateAutomatonFromRegexpOrPanic([]rune("+|-|\\*|/|=|\\(|\\)|;|!|@|#|$|%|^|&|\\[|]|{|}|:|'|<|>|,|\\.|?|\\||~|`"))
-	escape := NewFinateAutomatonFromRegexpOrPanic([]rune("\"([\\u0000-\\u0022]|[\\u0023-\\uffff]|\\.)*\"")) // \u0022 = "
+	escape := NewFinateAutomatonFromRegexpOrPanic([]rune("\"([\\u0000-\\u0009]|[\\u000B-\\u0021]|[\\u0023-\\u005B]|[\\u005D-\\uFFFF]|\\\\\\.)*\"")) // \u0022 = "
 
 	identify.SetAcceptTag(tagIdentify)
 	product.SetAcceptTag(tagProduct)

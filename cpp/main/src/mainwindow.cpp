@@ -8,7 +8,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ui(new Ui::MainWindow), parseId("") {
-	codeAnalyseTimer.setSingleShot(true);
+	codeAnalyseTimer.start(100);
 
 	connect(&codeAnalyseTimer, &QTimer::timeout, this,
 			&MainWindow::receiveProduction);
@@ -75,12 +75,14 @@ void MainWindow::actionNewFile() {
 }
 
 void MainWindow::receiveProduction() {
+	if (parseId.isEmpty()) {
+		return;
+	}
 	ipc::ProductionResult result;
 	bool ok = ipc::ProductionParseQuery(parseId, &result);
 	if (!ok) {
-		codeAnalyseTimer.start(100);
+		return;
 	}
-	codeAnalyseTimer.stop();
 	parseId = "";
 
 	updateList(ui->nonterminalList, result.nonterminals);
