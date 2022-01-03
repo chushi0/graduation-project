@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"sort"
 
 	"github.com/chushi0/graduation_project/golang/startup/production"
 	"github.com/chushi0/graduation_project/golang/startup/util/set"
@@ -130,4 +131,9 @@ func ProcessProductionParse(code string, process *ProductionProcess) {
 	for s := range terminals {
 		process.Result.Terminals = append(process.Result.Terminals, s)
 	}
+	if process.Interrupt {
+		return
+	}
+	sort.Strings(process.Result.Nonterminals)
+	sort.Strings(process.Result.Terminals)
 }
