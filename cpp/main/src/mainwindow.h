@@ -18,6 +18,7 @@ private slots:
 	void codeLineChange();
 	void codeChange();
 	void actionNewFile();
+	void actionAlogLL();
 	void receiveProduction();
 
 private:
