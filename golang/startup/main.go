@@ -49,12 +49,19 @@ func main() {
 func rpcinReader(pipe io.ReadCloser) {
 	buf := bufio.NewReader(pipe)
 	for {
-		line, _, err := buf.ReadLine()
-		if err != nil {
-			log.Fatalf("rpcinReader goroutine broken: %v", err)
-			return
+		body := make([]byte, 0)
+		for {
+			line, isPrefix, err := buf.ReadLine()
+			if err != nil {
+				log.Fatalf("rpcinReader goroutine broken: %v", err)
+				return
+			}
+			body = append(body, line...)
+			if !isPrefix {
+				break
+			}
 		}
-		rpcinChannel <- line
+		rpcinChannel <- body
 	}
 }
 
