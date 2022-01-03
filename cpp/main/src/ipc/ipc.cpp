@@ -10,7 +10,7 @@ QString ipc::ProductionParseStart(QString code) {
 	QJsonObject wrap;
 	wrap["action"] = "production_parse_start";
 	wrap["data"] = data;
-	auto req = QJsonDocument(wrap).toJson();
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
 	auto resp = RpcRequest(req);
 	return resp.Data["id"].toString();
 }
@@ -19,9 +19,9 @@ bool ipc::ProductionParseQuery(QString id, ProductionResult *result) {
 	QJsonObject data;
 	data["id"] = id;
 	QJsonObject wrap;
-	wrap["action"] = "production_parse_start";
+	wrap["action"] = "production_parse_query";
 	wrap["data"] = data;
-	auto req = QJsonDocument(wrap).toJson();
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
 	auto resp = RpcRequest(req);
 	if (resp.ResponseCode != 0) {
 		return false;
@@ -39,4 +39,14 @@ bool ipc::ProductionParseQuery(QString id, ProductionResult *result) {
 	ipc::parseErrors(resp.Data["errors"].toObject()["warning"].toArray(),
 					 &result->warnings);
 	return true;
+}
+
+void ipc::ProductionParseCancel(QString id) {
+	QJsonObject data;
+	data["id"] = id;
+	QJsonObject wrap;
+	wrap["action"] = "production_parse_cancel";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
 }

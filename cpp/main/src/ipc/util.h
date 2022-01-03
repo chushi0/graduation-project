@@ -1,5 +1,8 @@
 #include "base.h"
 #include "ipc.h"
+#pragma once
+
+#include "types.h"
 #include <QJsonArray>
 #include <QStringList>
 

@@ -2,6 +2,7 @@
 
 #include "./ui_mainwindow.h"
 #include <QMainWindow>
+#include <QTimer>
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
@@ -15,8 +16,16 @@ protected:
 
 private slots:
 	void codeLineChange();
+	void codeChange();
 	void actionNewFile();
+	void receiveProduction();
+
+private:
+	void updateList(QListWidget *listWidget, QStringList items);
 
 private:
 	Ui::MainWindow *ui;
+	QTimer codeAnalyseTimer;
+
+	QString parseId;
 };

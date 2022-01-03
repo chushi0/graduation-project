@@ -1,12 +1,9 @@
-#include <QJsonObject>
+#pragma once
+
+#include "types.h"
 #include <QString>
 
 namespace ipc {
-
-	struct Response {
-		int ResponseCode;
-		QJsonObject Data;
-	};
 
 	void Init();
 	QString ReceiveRpcMessage();
