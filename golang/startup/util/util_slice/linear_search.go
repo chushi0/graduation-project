@@ -8,3 +8,7 @@ func LinearSearch(length int, equal func(i int) bool) int {
 	}
 	return -1
 }
+
+func StringLinearSearch(slice []string, target string) int {
+	return LinearSearch(len(slice), func(i int) bool { return target == slice[i] })
+}
