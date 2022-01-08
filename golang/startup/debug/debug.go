@@ -26,11 +26,13 @@ type Point struct {
 
 // 调试上下文
 type DebugContext struct {
-	DebugRunMode RunMode                // 运行模式
-	BreakPoints  []*Point               // 断点
-	Variables    map[string]interface{} // 当前变量
-	Lock         sync.Mutex             // 锁
-	Condition    *sync.Cond             // 条件变量
+	DebugRunMode RunMode     // 运行模式
+	BreakPoints  []*Point    // 断点
+	CurrentPoint *Point      // 当前执行点
+	Variables    interface{} // 当前变量
+	Lock         sync.Mutex  // 锁
+	Condition    *sync.Cond  // 条件变量
+	ExitResult   interface{} // 退出结果
 }
 
 func NewDebugContext() *DebugContext {
@@ -41,9 +43,10 @@ func NewDebugContext() *DebugContext {
 }
 
 // 断点埋点
-func (ctx *DebugContext) RunReport(point *Point, variables map[string]interface{}) {
+func (ctx *DebugContext) RunReport(point *Point, variables interface{}) {
 	ctx.Lock.Lock()
 	defer ctx.Lock.Unlock()
+	ctx.CurrentPoint = point
 	ctx.Variables = variables
 	if utilslice.LinearSearch(len(ctx.BreakPoints), func(i int) bool {
 		return ctx.BreakPoints[i].Line == point.Line && ctx.BreakPoints[i].Name == point.Name
@@ -97,11 +100,22 @@ func (ctx *DebugContext) RemoveBreakPoint(point *Point) {
 
 // 获取变量
 // 若未暂停，返回 nil
-func (ctx *DebugContext) GetVariables() map[string]interface{} {
+func (ctx *DebugContext) GetVariables() interface{} {
 	ctx.Lock.Lock()
 	defer ctx.Lock.Unlock()
 	if ctx.DebugRunMode == RunMode_Paused {
 		return ctx.Variables
+	}
+	return nil
+}
+
+// 获取当前执行点
+// 若未暂停，返回 nil
+func (ctx *DebugContext) GetCurrentPoint() *Point {
+	ctx.Lock.Lock()
+	defer ctx.Lock.Unlock()
+	if ctx.DebugRunMode == RunMode_Paused {
+		return ctx.CurrentPoint
 	}
 	return nil
 }
