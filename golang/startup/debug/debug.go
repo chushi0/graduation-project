@@ -120,6 +120,14 @@ func (ctx *DebugContext) GetCurrentPoint() *Point {
 	return nil
 }
 
+// 获取当前运行模式
+// 加入内存屏障保证获取最新值
+func (ctx *DebugContext) GetCurrentRunMode() RunMode {
+	ctx.Lock.Lock()
+	defer ctx.Lock.Unlock()
+	return ctx.DebugRunMode
+}
+
 // 启动测试 goroutine
 func StartDebugGoroutine(entry func(ctx *DebugContext)) *DebugContext {
 	ctx := NewDebugContext()

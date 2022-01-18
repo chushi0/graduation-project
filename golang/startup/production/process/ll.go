@@ -20,6 +20,7 @@ type LLKeyVariables struct {
 	Productions   []production.Production `json:"productions"`
 	LoopVariableI int                     `json:"loop_variable_i"`
 	LoopVariableJ int                     `json:"loop_variable_j"`
+	ModifiedFlag  bool                    `json:"modified_flag"`
 
 	NonterminalOrders        []string              `json:"nonterminal_orders"`
 	CurrentProcessProduction production.Production `json:"current_process_production"`
@@ -43,6 +44,7 @@ func CreateLLProcessEntry(code string) func(*debug.DebugContext) {
 	return func(dc *debug.DebugContext) {
 		ctx.Context = dc
 		ctx.RunPipeline()
+		dc.SwitchRunMode(debug.RunMode_Exit)
 	}
 }
 
@@ -137,6 +139,17 @@ func (ctx *LLContext) ParseCode() {
  *     循环 j 从 1 到 i-1
  *         将 A[i]->A[j]γ 替换为 A[i]->δγ，其中A[j]->δ
  *     清除A[i]的直接左递归
+ *
+ * 断点解释：
+ * 1 - 非终结符排列完毕
+ * 2 - i 变动
+ * 3 - j 变动
+ * 4 - 即将对产生式处理
+ * 5 - 产生式处理完毕
+ * 6 - j 循环完毕
+ * 7 - 跳过清除左递归
+ * 8 - 即将处理产生式
+ * 9 - 清除左递归完成
  */
 func (ctx *LLContext) RemoveLeftRecusion() {
 	ctx.bury("RemoveLeftRecusion", 0)
@@ -168,7 +181,7 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 			B := ctx.KeyVariables.NonterminalOrders[ctx.KeyVariables.LoopVariableJ-1]
 
 			// 将 A[i]->A[j]γ 替换为 A[i]->δγ，其中A[j]->δ
-			dumpProductions := utilslice.CopyProductions(ctx.Grammer.Productions[A])
+			dumpProductions := utilslice.CopyStringSlice(ctx.Grammer.Productions[A])
 			for _, prod := range dumpProductions {
 				ctx.KeyVariables.CurrentProcessProduction = prod
 				ctx.bury("RemoveLeftRecusion", 4)
@@ -206,16 +219,22 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 
 		newNonterminal := ctx.Grammer.AddNewNonterminal(A)
 		ctx.Grammer.AddNewProduction([]string{newNonterminal})
-		for i, prod := range ctx.Grammer.Productions[A] {
+		for _, prod := range utilslice.CopyStringSlice(ctx.Grammer.Productions[A]) {
 			ctx.KeyVariables.CurrentProcessProduction = prod
 			ctx.bury("RemoveLeftRecusion", 8)
 
 			if len(prod) > 1 && prod[1] == A {
+				// 非终结符新的产生式
 				newProd := []string{newNonterminal}
 				newProd = append(newProd, prod[2:]...)
+				newProd = append(newProd, newNonterminal)
 				ctx.Grammer.AddNewProduction(newProd)
+				// 移除原产生式
+				ctx.Grammer.RemoveProduction(prod)
 			} else {
-				newProd := []
+				newProd := append(prod, newNonterminal)
+				ctx.Grammer.AddNewProduction(newProd)
+				ctx.Grammer.RemoveProduction(prod)
 			}
 
 			ctx.bury("RemoveLeftRecusion", 9)
@@ -225,4 +244,35 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 	}
 
 	ctx.bury("RemoveLeftRecusion", -1)
+}
+
+/**
+ * 算法步骤：
+ * 按照一定顺序排列非终结符 A[1]...A[n]
+ * 循环 i 从 1 到 n
+ *     遍历查找最短的公共前缀
+ *         提出公共前缀
+ */
+func (ctx *LLContext) ExtractCommonPrefix() {
+	ctx.bury("ExtractCommonPrefix", 0)
+
+	ctx.bury("ExtractCommonPrefix", -1)
+}
+
+func (ctx *LLContext) ComputeFirstSet() {
+}
+
+func (ctx *LLContext) ComputeFollowSet() {
+}
+
+func (ctx *LLContext) ComputeSelectSet() {
+}
+
+func (ctx *LLContext) CheckSelectConflict() {
+}
+
+func (ctx *LLContext) GenerateAutomaton() {
+}
+
+func (ctx *LLContext) GenerateYaccCode() {
 }

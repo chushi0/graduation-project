@@ -7,7 +7,7 @@ import (
 	"github.com/chushi0/graduation_project/golang/startup/util/set"
 )
 
-type Production []string
+type Production = []string
 
 // IO
 type IO struct {
