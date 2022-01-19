@@ -54,6 +54,13 @@ func (g *Grammer) AddNewProduction(prod production.Production) {
 // 添加新的非终结符
 // from: 由哪个非终结符生成
 func (g *Grammer) AddNewNonterminal(from string) string {
+	for {
+		original, exist := g.RawNonterminals[from]
+		if !exist {
+			break
+		}
+		from = original
+	}
 	var newNonterminal string
 	for i := 0; ; i++ {
 		newNonterminal = fmt.Sprintf("%s_%d", from, i)

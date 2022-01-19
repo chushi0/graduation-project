@@ -5,6 +5,7 @@ import (
 
 	"github.com/chushi0/graduation_project/golang/startup/debug"
 	"github.com/chushi0/graduation_project/golang/startup/production"
+	"github.com/chushi0/graduation_project/golang/startup/util/set"
 	utilslice "github.com/chushi0/graduation_project/golang/startup/util/util_slice"
 )
 
@@ -255,6 +256,70 @@ func (ctx *LLContext) RemoveLeftRecusion() {
  */
 func (ctx *LLContext) ExtractCommonPrefix() {
 	ctx.bury("ExtractCommonPrefix", 0)
+
+	// 按照一定顺序排列非终结符
+	ctx.KeyVariables.NonterminalOrders = make([]string, 0)
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, nonterminal)
+	}
+	sort.Strings(ctx.KeyVariables.NonterminalOrders)
+	ctx.bury("ExtractCommonPrefix", 1)
+
+	// 循环
+	ctx.KeyVariables.LoopVariableI = 0
+	for {
+		if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.NonterminalOrders) {
+			break
+		}
+
+		nonterminal := ctx.KeyVariables.NonterminalOrders[ctx.KeyVariables.LoopVariableI]
+		for {
+			prefixes := set.NewStringSet()
+			commonPrefix := make([]string, 0)
+			for _, prod := range ctx.Grammer.Productions[nonterminal] {
+				prefix := prod[1]
+				if prefixes.Contains(prefix) {
+					commonPrefix = append(commonPrefix, prod[1:]...)
+					break
+				}
+				prefixes.Put(prefix)
+			}
+
+			if len(commonPrefix) == 0 {
+				break
+			}
+
+			processProds := make([]production.Production, 0)
+			for _, prod := range ctx.Grammer.Productions[nonterminal] {
+				if prod[1] != commonPrefix[0] {
+					continue
+				}
+				processProds = append(processProds, prod)
+
+				for i := 0; i < len(commonPrefix) && i < len(prod)-1; i++ {
+					if commonPrefix[i] != prod[i+1] {
+						commonPrefix = commonPrefix[:i]
+						break
+					}
+				}
+			}
+
+			newNonterminal := ctx.Grammer.AddNewNonterminal(nonterminal)
+			newProd := []string{nonterminal}
+			newProd = append(newProd, commonPrefix...)
+			newProd = append(newProd, newNonterminal)
+			ctx.Grammer.AddNewProduction(newProd)
+			ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, newNonterminal)
+			for _, prod := range processProds {
+				ctx.Grammer.RemoveProduction(prod)
+				newProd := []string{newNonterminal}
+				newProd = append(newProd, prod[len(commonPrefix)+1:]...)
+				ctx.Grammer.AddNewProduction(newProd)
+			}
+		}
+
+		ctx.KeyVariables.LoopVariableI++
+	}
 
 	ctx.bury("ExtractCommonPrefix", -1)
 }
