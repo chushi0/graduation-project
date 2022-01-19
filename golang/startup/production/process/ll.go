@@ -322,6 +322,13 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 	}
 
 	ctx.bury("ExtractCommonPrefix", -1)
+
+	// 更新产生式
+	prods := make([]production.Production, 0)
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		prods = append(prods, ctx.Grammer.Productions[nonterminal]...)
+	}
+	ctx.KeyVariables.Productions = prods
 }
 
 func (ctx *LLContext) ComputeFirstSet() {
