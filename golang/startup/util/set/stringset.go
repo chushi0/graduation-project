@@ -63,12 +63,16 @@ func (s StringSet) Equals(o StringSet) bool {
 	return true
 }
 
-func (s StringSet) Merge(o StringSet) {
-	for v := range o {
-		s[v] = true
-	}
-}
-
 func (s StringSet) Remove(val string) {
 	delete(s, val)
+}
+
+func (s StringSet) Intersection(o StringSet) StringSet {
+	res := NewStringSet()
+	for v := range s {
+		if o.Contains(v) {
+			res.Put(v)
+		}
+	}
+	return res
 }

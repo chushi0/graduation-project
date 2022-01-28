@@ -1,7 +1,13 @@
 package process
 
 import (
+	"bufio"
+	"errors"
+	"fmt"
+	"math/rand"
+	"os"
 	"sort"
+	"strings"
 
 	"github.com/chushi0/graduation_project/golang/startup/debug"
 	"github.com/chushi0/graduation_project/golang/startup/production"
@@ -33,14 +39,18 @@ type LLKeyVariables struct {
 }
 
 type LLResult struct {
-	Code   int                    `json:"code"`
-	Detail map[string]interface{} `json:"detail"`
+	Code      int                    `json:"code"`
+	Detail    map[string]interface{} `json:"detail"`
+	Variables *LLKeyVariables        `json:"variables"`
 }
 
 const (
-	LL_Success         = 0
-	LL_Error_ParseCode = 1
+	LL_Success              = 0
+	LL_Error_ParseCode      = 1
+	LL_Error_SelectConflict = 2
 )
+
+var errPipelineShutdown = errors.New("pipeline shutdown")
 
 func CreateLLProcessEntry(code string) func(*debug.DebugContext) {
 	ctx := &LLContext{
@@ -48,6 +58,14 @@ func CreateLLProcessEntry(code string) func(*debug.DebugContext) {
 		KeyVariables: &LLKeyVariables{},
 	}
 	return func(dc *debug.DebugContext) {
+		defer func() {
+			if err := recover(); err != nil {
+				if err == errPipelineShutdown {
+					return
+				}
+				panic(err)
+			}
+		}()
 		ctx.Context = dc
 		ctx.RunPipeline()
 		dc.SwitchRunMode(debug.RunMode_Exit)
@@ -59,6 +77,12 @@ func (ctx *LLContext) bury(name string, line int) {
 		Name: name,
 		Line: line,
 	}, ctx.KeyVariables)
+}
+
+func (ctx *LLContext) shutdownPipeline(res *LLResult) {
+	res.Variables = ctx.KeyVariables
+	ctx.Context.ExitResult = res
+	panic(errPipelineShutdown)
 }
 
 func (ctx *LLContext) RunPipeline() {
@@ -125,12 +149,12 @@ func (ctx *LLContext) ParseCode() {
 
 	prods, errs := production.ParseProduction(ctx.Code, nil)
 	if len(errs.Errors) > 0 {
-		ctx.Context.ExitResult = &LLResult{
+		ctx.shutdownPipeline(&LLResult{
 			Code: LL_Error_ParseCode,
 			Detail: map[string]interface{}{
 				"errors": errs.Errors,
 			},
-		}
+		})
 	}
 	ctx.KeyVariables.Productions = prods
 	ctx.Grammer = NewGrammer(prods)
@@ -513,10 +537,130 @@ func (ctx *LLContext) ComputeSelectSet() {
 }
 
 func (ctx *LLContext) CheckSelectConflict() {
+	selectSets := make(map[string]set.StringSet)
+	for i, prod := range ctx.KeyVariables.Productions {
+		if _, ok := selectSets[prod[0]]; !ok {
+			selectSets[prod[0]] = set.NewStringSet()
+		}
+		intersection := selectSets[prod[0]].Intersection(ctx.KeyVariables.SelectSet[i])
+		if len(intersection) > 0 {
+			ctx.shutdownPipeline(&LLResult{
+				Code: LL_Error_SelectConflict,
+			})
+		}
+		selectSets[prod[0]].UnionExcept(ctx.KeyVariables.SelectSet[i])
+	}
 }
 
 func (ctx *LLContext) GenerateAutomaton() {
 }
 
 func (ctx *LLContext) GenerateYaccCode() {
+	serials := NewSerialTokens()
+	prodSerials := make([]string, len(ctx.KeyVariables.Productions))
+	// FIXME: 测试时临时生成到文件中
+	file, _ := os.Create("test.h")
+	bufWrite := bufio.NewWriter(file)
+	defer func() {
+		bufWrite.Flush()
+		file.Close()
+	}()
+	bufWrite.WriteString(`#pragma once
+/**
+ * Auto-generate header file.
+ * After you re-generate file, ALL YOUR CHANGE WILL BE LOST!
+ */
+`)
+	// 随机命名空间
+	randomNamespace := fmt.Sprintf("LL_%d_%d", rand.Int(), rand.Int())
+	bufWrite.WriteString(fmt.Sprintf(`
+// By modify this macro, you can define automaton code in namespace
+#define %s
+
+#if %s
+namespace %s {
+#endif
+`, randomNamespace, randomNamespace, randomNamespace))
+
+	// 写入原始代码
+	bufWrite.WriteString("\n\t// Production Definition Code\n")
+	for _, line := range strings.Split(ctx.Code, "\n") {
+		bufWrite.WriteString(fmt.Sprintf("\t// %s\n", line))
+	}
+
+	// 写入终结符定义
+	bufWrite.WriteString(`
+	// Terminals Definition
+	constexpr int TerminalEOF = -1;
+`)
+	for terminal := range ctx.Grammer.Terminals {
+		serials.Put(terminal)
+		token := serials.Map[terminal]
+		bufWrite.WriteString(fmt.Sprintf("\tconstexpr int Terminal_%s = %d; // %s\n", token.SerialString, token.Index, terminal))
+	}
+
+	// 写入非终结符定义
+	bufWrite.WriteString(`
+	// Nonterminals Definition
+`)
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		serials.Put(nonterminal)
+		token := serials.Map[nonterminal]
+		bufWrite.WriteString(fmt.Sprintf("\tconstexpr int Nonterminal_%s = %d; // %s\n", token.SerialString, token.Index, nonterminal))
+	}
+
+	// 写入产生式定义
+	bufWrite.WriteString(`
+	// Productions Definition
+`)
+	for i, prod := range ctx.KeyVariables.Productions {
+		prodSerials[i] = serials.Map[prod[0]].SerialString
+		for j := 1; j < len(prod); j++ {
+			prodSerials[i] += "_" + serials.Map[prod[j]].SerialString
+		}
+	}
+	for i, prod := range ctx.KeyVariables.Productions {
+		bufWrite.WriteString(fmt.Sprintf("\tconstexpr int Production_%s = %d; // ", prodSerials[i], i))
+		bufWrite.WriteString(prod[0])
+		bufWrite.WriteString(" :=")
+		for j := 1; j < len(prod); j++ {
+			bufWrite.WriteString(" ")
+			bufWrite.WriteString(prod[j])
+		}
+		bufWrite.WriteString("\n")
+	}
+
+	// 其他结构定义
+	bufWrite.WriteString(`
+	// Compile Error (will throw by parser function)
+		struct CompileError {
+		// an array contains terminal's id what parser expect
+		int* Expected;
+		// size of Expected
+		int ExpectedSize;
+		// parser read actually
+		int Actual;
+	};
+
+	// Interface which can be easily defined by user
+	class IParser {
+	public:
+		// Read a terminal from lexer. If no more terminals, return TerminalEOF(-1)
+		virtual int Next() = 0;
+		// Infer left nonterminal by production
+		virtual void Infer(int id) = 0;
+		// Error occurred when parse (parser will exit)
+		virtual void Panic(CompileError* error) = 0;
+	};
+
+	// main entry parser
+	// true means success, false means fail (after calling IParser.Panic)
+	bool Parse(IParser* parser);
+`)
+
+	bufWrite.WriteString(fmt.Sprintf(`
+#if %s
+}
+#endif
+`, randomNamespace))
 }
