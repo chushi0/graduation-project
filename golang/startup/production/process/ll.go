@@ -25,6 +25,10 @@ type LLKeyVariables struct {
 
 	NonterminalOrders        []string              `json:"nonterminal_orders"`
 	CurrentProcessProduction production.Production `json:"current_process_production"`
+
+	FirstSet  map[string]set.StringSet `json:"first"`
+	FollowSet map[string]set.StringSet `json:"follow"`
+	SelectSet []set.StringSet          `json:"select"`
 }
 
 type LLResult struct {
@@ -191,7 +195,7 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 					for _, bprod := range ctx.Grammer.Productions[B] {
 						newProd := make([]string, 0)
 						newProd = append(newProd, A)
-						newProd = append(newProd, bprod...)
+						newProd = append(newProd, bprod[1:]...)
 						newProd = append(newProd, prod[2:]...)
 						ctx.Grammer.AddNewProduction(newProd)
 					}
@@ -277,6 +281,9 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 			prefixes := set.NewStringSet()
 			commonPrefix := make([]string, 0)
 			for _, prod := range ctx.Grammer.Productions[nonterminal] {
+				if len(prod) == 1 {
+					continue
+				}
 				prefix := prod[1]
 				if prefixes.Contains(prefix) {
 					commonPrefix = append(commonPrefix, prod[1:]...)
@@ -291,7 +298,7 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 
 			processProds := make([]production.Production, 0)
 			for _, prod := range ctx.Grammer.Productions[nonterminal] {
-				if prod[1] != commonPrefix[0] {
+				if len(prod) == 1 || prod[1] != commonPrefix[0] {
 					continue
 				}
 				processProds = append(processProds, prod)
@@ -332,6 +339,55 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 }
 
 func (ctx *LLContext) ComputeFirstSet() {
+	// 初始化 First 集
+	ctx.KeyVariables.FirstSet = make(map[string]set.StringSet)
+	for i := range ctx.Grammer.Nonterminals {
+		ctx.KeyVariables.FirstSet[i] = set.NewStringSet()
+	}
+
+	// 按照一定顺序排列非终结符
+	ctx.KeyVariables.NonterminalOrders = make([]string, 0)
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, nonterminal)
+	}
+	sort.Strings(ctx.KeyVariables.NonterminalOrders)
+
+	ctx.KeyVariables.ModifiedFlag = true
+	for ctx.KeyVariables.ModifiedFlag {
+		ctx.KeyVariables.ModifiedFlag = false
+
+		ctx.KeyVariables.LoopVariableI = 0
+		for {
+			if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.Productions) {
+				break
+			}
+			prod := ctx.KeyVariables.Productions[ctx.KeyVariables.LoopVariableI]
+			nonterminal := prod[0]
+
+			ctx.KeyVariables.LoopVariableJ = 1
+			for {
+				if ctx.KeyVariables.LoopVariableJ >= len(prod) {
+					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.FirstSet[nonterminal].Put("") > 0
+					break
+				}
+
+				// 终结符
+				if ctx.Grammer.Terminals.Contains(prod[ctx.KeyVariables.LoopVariableJ]) {
+					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.FirstSet[nonterminal].Put(prod[ctx.KeyVariables.LoopVariableJ]) > 0
+					break
+				}
+				// 非终结符
+				nonterminalFirstSet := ctx.KeyVariables.FirstSet[prod[ctx.KeyVariables.LoopVariableJ]]
+				ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.FirstSet[nonterminal].UnionExcept(nonterminalFirstSet, "") > 0
+				if !nonterminalFirstSet.Contains("") {
+					break
+				}
+
+				ctx.KeyVariables.LoopVariableJ++
+			}
+			ctx.KeyVariables.LoopVariableI++
+		}
+	}
 }
 
 func (ctx *LLContext) ComputeFollowSet() {

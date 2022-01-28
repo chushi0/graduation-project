@@ -13,3 +13,19 @@ func TestLLRemoveLeftRecusion(t *testing.T) {
 	dbg.SwitchRunMode(debug.RunMode_Run)
 	entry(dbg)
 }
+
+func TestLLComputeFirstSetRecusion(t *testing.T) {
+	entry := process.CreateLLProcessEntry(`
+	E := T E0
+	E0 := + T E0
+		|
+	T := F T0
+	T0 := * F T0
+		|
+	F := ( E )
+		| id
+	`)
+	dbg := debug.NewDebugContext()
+	dbg.SwitchRunMode(debug.RunMode_Run)
+	entry(dbg)
+}

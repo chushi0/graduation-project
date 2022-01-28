@@ -10,10 +10,32 @@ func NewStringSet(val ...string) StringSet {
 	return res
 }
 
-func (s StringSet) Put(val ...string) {
+func (s StringSet) Put(val ...string) int {
+	c := 0
 	for _, v := range val {
+		if s.Contains(v) {
+			continue
+		}
 		s[v] = true
+		c += 1
 	}
+	return c
+}
+
+func (s StringSet) UnionExcept(set StringSet, except ...string) int {
+	exceptSet := NewStringSet(except...)
+	c := 0
+	for v := range set {
+		if exceptSet.Contains(v) {
+			continue
+		}
+		if s.Contains(v) {
+			continue
+		}
+		s[v] = true
+		c += 1
+	}
+	return c
 }
 
 func (s StringSet) Contains(n string) bool {
