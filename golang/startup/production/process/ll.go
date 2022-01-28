@@ -473,6 +473,43 @@ func (ctx *LLContext) ComputeFollowSet() {
 }
 
 func (ctx *LLContext) ComputeSelectSet() {
+	// 初始化 Select 集
+	ctx.KeyVariables.SelectSet = make([]set.StringSet, len(ctx.KeyVariables.Productions))
+	for i := range ctx.KeyVariables.Productions {
+		ctx.KeyVariables.SelectSet[i] = set.NewStringSet()
+	}
+
+	ctx.KeyVariables.LoopVariableI = 0
+	for {
+		if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.Productions) {
+			break
+		}
+		prod := ctx.KeyVariables.Productions[ctx.KeyVariables.LoopVariableI]
+
+		ctx.KeyVariables.LoopVariableJ = 1
+		for {
+			if ctx.KeyVariables.LoopVariableJ >= len(prod) {
+				ctx.KeyVariables.SelectSet[ctx.KeyVariables.LoopVariableI].UnionExcept(ctx.KeyVariables.FollowSet[prod[0]])
+				break
+			}
+
+			cur := prod[ctx.KeyVariables.LoopVariableJ]
+			if ctx.Grammer.Terminals.Contains(cur) {
+				ctx.KeyVariables.SelectSet[ctx.KeyVariables.LoopVariableI].Put(cur)
+				break
+			}
+			ctx.KeyVariables.SelectSet[ctx.KeyVariables.LoopVariableI].UnionExcept(
+				ctx.KeyVariables.FirstSet[prod[ctx.KeyVariables.LoopVariableJ]], "",
+			)
+			if !ctx.KeyVariables.FirstSet[prod[ctx.KeyVariables.LoopVariableJ]].Contains("") {
+				break
+			}
+
+			ctx.KeyVariables.LoopVariableJ++
+		}
+
+		ctx.KeyVariables.LoopVariableI++
+	}
 }
 
 func (ctx *LLContext) CheckSelectConflict() {
