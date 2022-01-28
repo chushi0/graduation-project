@@ -633,7 +633,7 @@ namespace %s {
 	// 其他结构定义
 	bufWrite.WriteString(`
 	// Compile Error (will throw by parser function)
-		struct CompileError {
+	struct CompileError {
 		// an array contains terminal's id what parser expect
 		int* Expected;
 		// size of Expected
