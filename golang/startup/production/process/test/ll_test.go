@@ -16,6 +16,7 @@ func TestLLRemoveLeftRecusion(t *testing.T) {
 
 func TestLLComputeFirstSetRecusion(t *testing.T) {
 	entry := process.CreateLLProcessEntry(`
+	S := E
 	E := T E0
 	E0 := + T E0
 		|

@@ -21,6 +21,7 @@ type LLKeyVariables struct {
 	Productions   []production.Production `json:"productions"`
 	LoopVariableI int                     `json:"loop_variable_i"`
 	LoopVariableJ int                     `json:"loop_variable_j"`
+	LoopVariableK int                     `json:"loop_variable_k"`
 	ModifiedFlag  bool                    `json:"modified_flag"`
 
 	NonterminalOrders        []string              `json:"nonterminal_orders"`
@@ -367,18 +368,21 @@ func (ctx *LLContext) ComputeFirstSet() {
 			ctx.KeyVariables.LoopVariableJ = 1
 			for {
 				if ctx.KeyVariables.LoopVariableJ >= len(prod) {
-					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.FirstSet[nonterminal].Put("") > 0
+					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
+						ctx.KeyVariables.FirstSet[nonterminal].Put("") > 0
 					break
 				}
 
 				// 终结符
 				if ctx.Grammer.Terminals.Contains(prod[ctx.KeyVariables.LoopVariableJ]) {
-					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.FirstSet[nonterminal].Put(prod[ctx.KeyVariables.LoopVariableJ]) > 0
+					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
+						ctx.KeyVariables.FirstSet[nonterminal].Put(prod[ctx.KeyVariables.LoopVariableJ]) > 0
 					break
 				}
 				// 非终结符
 				nonterminalFirstSet := ctx.KeyVariables.FirstSet[prod[ctx.KeyVariables.LoopVariableJ]]
-				ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.FirstSet[nonterminal].UnionExcept(nonterminalFirstSet, "") > 0
+				ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
+					ctx.KeyVariables.FirstSet[nonterminal].UnionExcept(nonterminalFirstSet, "") > 0
 				if !nonterminalFirstSet.Contains("") {
 					break
 				}
@@ -391,6 +395,81 @@ func (ctx *LLContext) ComputeFirstSet() {
 }
 
 func (ctx *LLContext) ComputeFollowSet() {
+	// 初始化 Follow 集
+	ctx.KeyVariables.FollowSet = make(map[string]set.StringSet)
+	for i := range ctx.Grammer.Nonterminals {
+		ctx.KeyVariables.FollowSet[i] = set.NewStringSet()
+	}
+
+	// 按照一定顺序排列非终结符
+	ctx.KeyVariables.NonterminalOrders = make([]string, 0)
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, nonterminal)
+	}
+	sort.Strings(ctx.KeyVariables.NonterminalOrders)
+
+	ctx.KeyVariables.ModifiedFlag = true
+	for ctx.KeyVariables.ModifiedFlag {
+		ctx.KeyVariables.ModifiedFlag = false
+
+		ctx.KeyVariables.LoopVariableI = 0
+		for {
+			if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.Productions) {
+				break
+			}
+			prod := ctx.KeyVariables.Productions[ctx.KeyVariables.LoopVariableI]
+			nonterminal := prod[0]
+
+			// 开始符号：加入 $ 结束符
+			if nonterminal == ctx.Grammer.StartNonterminal {
+				ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
+					ctx.KeyVariables.FollowSet[nonterminal].Put("$") > 0
+			}
+
+			// 顺序遍历
+			ctx.KeyVariables.LoopVariableJ = 1
+			for {
+				if ctx.KeyVariables.LoopVariableJ >= len(prod) {
+					break
+				}
+
+				current := prod[ctx.KeyVariables.LoopVariableJ]
+				if !ctx.Grammer.Nonterminals.Contains(current) {
+					ctx.KeyVariables.LoopVariableJ++
+					continue
+				}
+				ctx.KeyVariables.LoopVariableK = ctx.KeyVariables.LoopVariableJ + 1
+				for {
+					if ctx.KeyVariables.LoopVariableK >= len(prod) {
+						ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
+							ctx.KeyVariables.FollowSet[current].UnionExcept(
+								ctx.KeyVariables.FollowSet[nonterminal],
+							) > 0
+						break
+					}
+					cur := prod[ctx.KeyVariables.LoopVariableK]
+					if ctx.Grammer.Terminals.Contains(cur) {
+						ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
+							ctx.KeyVariables.FollowSet[current].Put(cur) > 0
+						break
+					}
+
+					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
+						ctx.KeyVariables.FollowSet[current].UnionExcept(
+							ctx.KeyVariables.FirstSet[cur], "",
+						) > 0
+					if !ctx.KeyVariables.FirstSet[cur].Contains("") {
+						break
+					}
+
+					ctx.KeyVariables.LoopVariableK++
+				}
+				ctx.KeyVariables.LoopVariableJ++
+			}
+			ctx.KeyVariables.LoopVariableI++
+		}
+
+	}
 }
 
 func (ctx *LLContext) ComputeSelectSet() {

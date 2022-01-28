@@ -10,10 +10,11 @@ import (
 
 // 产生式所定义的语法
 type Grammer struct {
-	Terminals       set.StringSet                      // 终结符
-	Nonterminals    set.StringSet                      // 非终结符
-	Productions     map[string][]production.Production // 产生式（key：终结符）
-	RawNonterminals map[string]string                  // 映射到原始非终结符
+	StartNonterminal string                             // 开始符号
+	Terminals        set.StringSet                      // 终结符
+	Nonterminals     set.StringSet                      // 非终结符
+	Productions      map[string][]production.Production // 产生式（key：终结符）
+	RawNonterminals  map[string]string                  // 映射到原始非终结符
 }
 
 func NewGrammer(prods []production.Production) *Grammer {
@@ -33,6 +34,10 @@ func NewGrammer(prods []production.Production) *Grammer {
 	// 存入产生式
 	for _, prod := range prods {
 		grammer.AddNewProduction(prod)
+	}
+
+	if nonterminals.Contains("S") {
+		grammer.StartNonterminal = "S"
 	}
 
 	return grammer
