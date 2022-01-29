@@ -559,13 +559,20 @@ func (ctx *LLContext) GenerateYaccCode() {
 	serials := NewSerialTokens()
 	prodSerials := make([]string, len(ctx.KeyVariables.Productions))
 	// FIXME: 测试时临时生成到文件中
-	file, _ := os.Create("test.h")
-	bufWrite := bufio.NewWriter(file)
+	headFile, _ := os.Create("test.h")
+	headBufWrite := bufio.NewWriter(headFile)
+	cppFile, _ := os.Create("test.cpp")
+	cppBufWrite := bufio.NewWriter(cppFile)
 	defer func() {
-		bufWrite.Flush()
-		file.Close()
+		headBufWrite.Flush()
+		headFile.Close()
+		cppBufWrite.Flush()
+		cppFile.Close()
 	}()
-	bufWrite.WriteString(`#pragma once
+
+	// 头文件
+
+	headBufWrite.WriteString(`#pragma once
 /**
  * Auto-generate header file.
  * After you re-generate file, ALL YOUR CHANGE WILL BE LOST!
@@ -573,44 +580,44 @@ func (ctx *LLContext) GenerateYaccCode() {
 `)
 	// 随机命名空间
 	randomNamespace := fmt.Sprintf("LL_%d_%d", rand.Int(), rand.Int())
-	bufWrite.WriteString(fmt.Sprintf(`
+	headBufWrite.WriteString(fmt.Sprintf(`
 // By modify this macro, you can define automaton code in namespace
-#define %s
+// #define %s
 
-#if %s
+#ifdef %s
 namespace %s {
 #endif
 `, randomNamespace, randomNamespace, randomNamespace))
 
 	// 写入原始代码
-	bufWrite.WriteString("\n\t// Production Definition Code\n")
+	headBufWrite.WriteString("\n\t// Production Definition Code\n")
 	for _, line := range strings.Split(ctx.Code, "\n") {
-		bufWrite.WriteString(fmt.Sprintf("\t// %s\n", line))
+		headBufWrite.WriteString(fmt.Sprintf("\t// %s\n", line))
 	}
 
 	// 写入终结符定义
-	bufWrite.WriteString(`
+	headBufWrite.WriteString(`
 	// Terminals Definition
 	constexpr int TerminalEOF = -1;
 `)
 	for terminal := range ctx.Grammer.Terminals {
 		serials.Put(terminal)
 		token := serials.Map[terminal]
-		bufWrite.WriteString(fmt.Sprintf("\tconstexpr int Terminal_%s = %d; // %s\n", token.SerialString, token.Index, terminal))
+		headBufWrite.WriteString(fmt.Sprintf("\tconstexpr int Terminal_%s = %d; // %s\n", token.SerialString, token.Index, terminal))
 	}
 
 	// 写入非终结符定义
-	bufWrite.WriteString(`
+	headBufWrite.WriteString(`
 	// Nonterminals Definition
 `)
 	for nonterminal := range ctx.Grammer.Nonterminals {
 		serials.Put(nonterminal)
 		token := serials.Map[nonterminal]
-		bufWrite.WriteString(fmt.Sprintf("\tconstexpr int Nonterminal_%s = %d; // %s\n", token.SerialString, token.Index, nonterminal))
+		headBufWrite.WriteString(fmt.Sprintf("\tconstexpr int Nonterminal_%s = %d; // %s\n", token.SerialString, token.Index, nonterminal))
 	}
 
 	// 写入产生式定义
-	bufWrite.WriteString(`
+	headBufWrite.WriteString(`
 	// Productions Definition
 `)
 	for i, prod := range ctx.KeyVariables.Productions {
@@ -620,18 +627,18 @@ namespace %s {
 		}
 	}
 	for i, prod := range ctx.KeyVariables.Productions {
-		bufWrite.WriteString(fmt.Sprintf("\tconstexpr int Production_%s = %d; // ", prodSerials[i], i))
-		bufWrite.WriteString(prod[0])
-		bufWrite.WriteString(" :=")
+		headBufWrite.WriteString(fmt.Sprintf("\tconstexpr int Production_%s = %d; // ", prodSerials[i], i))
+		headBufWrite.WriteString(prod[0])
+		headBufWrite.WriteString(" :=")
 		for j := 1; j < len(prod); j++ {
-			bufWrite.WriteString(" ")
-			bufWrite.WriteString(prod[j])
+			headBufWrite.WriteString(" ")
+			headBufWrite.WriteString(prod[j])
 		}
-		bufWrite.WriteString("\n")
+		headBufWrite.WriteString("\n")
 	}
 
 	// 其他结构定义
-	bufWrite.WriteString(`
+	headBufWrite.WriteString(`
 	// Compile Error (will throw by parser function)
 	struct CompileError {
 		// an array contains terminal's id what parser expect
@@ -658,9 +665,46 @@ namespace %s {
 	bool Parse(IParser* parser);
 `)
 
-	bufWrite.WriteString(fmt.Sprintf(`
-#if %s
+	headBufWrite.WriteString(fmt.Sprintf(`
+#ifdef %s
 }
 #endif
 `, randomNamespace))
+
+	// 实现文件
+
+	cppBufWrite.WriteString(`
+/**
+ * Auto-generate file. DO NOT MODIFY.
+ * all your change WILL BE LOST after you re-generate file.
+ */
+#include "test.h"
+#include <vector>
+`)
+	cppBufWrite.WriteString(fmt.Sprintf(`
+#ifdef %s
+using namespace %s;
+#endif
+
+#ifdef %s
+bool %s::Parse(IParser* parser)
+#else
+bool Parse(IParser* parser)
+#endif
+`, randomNamespace, randomNamespace, randomNamespace, randomNamespace))
+	cppBufWrite.WriteString(fmt.Sprintf(`{
+	std::vector<int> stack;
+	stack.push_back(Nonterminal_%s);
+	while(stack.size() > 0) {
+		int last = stack.back();
+		int token = parser->Next();
+		stack.pop_back();
+		switch(last) {
+`, serials.Map[ctx.Grammer.StartNonterminal].SerialString))
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		cppBufWrite.WriteString(fmt.Sprintf(`\t\t\tcase Nonterminal_%s:
+				switch(token) {
+`, serials.Map[nonterminal].SerialString))
+
+	}
 }
