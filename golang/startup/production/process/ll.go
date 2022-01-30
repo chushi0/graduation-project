@@ -2,7 +2,6 @@ package process
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -52,22 +51,12 @@ const (
 	LL_Error_SelectConflict = 2
 )
 
-var errPipelineShutdown = errors.New("pipeline shutdown")
-
 func CreateLLProcessEntry(code string) func(*debug.DebugContext) {
 	ctx := &LLContext{
 		Code:         code,
 		KeyVariables: &LLKeyVariables{},
 	}
 	return func(dc *debug.DebugContext) {
-		defer func() {
-			if err := recover(); err != nil {
-				if err == errPipelineShutdown {
-					return
-				}
-				panic(err)
-			}
-		}()
 		ctx.Context = dc
 		ctx.RunPipeline()
 		dc.SwitchRunMode(debug.RunMode_Exit)
@@ -84,7 +73,8 @@ func (ctx *LLContext) bury(name string, line int) {
 func (ctx *LLContext) shutdownPipeline(res *LLResult) {
 	res.Variables = ctx.KeyVariables
 	ctx.Context.ExitResult = res
-	panic(errPipelineShutdown)
+	ctx.Context.SwitchRunMode(debug.RunMode_Exit)
+	ctx.bury("shutdown", 0)
 }
 
 func (ctx *LLContext) RunPipeline() {
