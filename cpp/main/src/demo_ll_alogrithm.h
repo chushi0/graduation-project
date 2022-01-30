@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./ui_demo_ll_alogrithm.h"
+#include "./ui_demo_ll_window.h"
 #include <QMainWindow>
 #include <QProgressBar>
 
@@ -15,6 +15,5 @@ protected:
 	virtual void closeEvent(QCloseEvent *) override;
 
 private:
-	Ui_DemoLLAlogrithmWindow *ui;
-	QProgressBar *statusProgress;
+	Ui::DemoLLWindow *ui;
 };

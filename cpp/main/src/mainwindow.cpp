@@ -39,8 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui->actionNewFile, &QAction::triggered, this,
 			&MainWindow::actionNewFile);
 	connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
-	connect(ui->actionAlogLL, &QAction::triggered, this,
-			&MainWindow::actionAlogLL);
+	connect(ui->actionLL, &QAction::triggered, this, &MainWindow::actionAlogLL);
 }
 
 MainWindow::~MainWindow() {
