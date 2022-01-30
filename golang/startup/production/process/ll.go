@@ -33,6 +33,8 @@ type LLKeyVariables struct {
 	NonterminalOrders        []string              `json:"nonterminal_orders"`
 	CurrentProcessProduction production.Production `json:"current_process_production"`
 
+	CommonPrefix []string `json:"common_prefix"`
+
 	FirstSet  map[string]set.StringSet `json:"first"`
 	FollowSet map[string]set.StringSet `json:"follow"`
 	SelectSet []set.StringSet          `json:"select"`
@@ -297,6 +299,7 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 	// 循环
 	ctx.KeyVariables.LoopVariableI = 0
 	for {
+		ctx.bury("ExtractCommonPrefix", 2)
 		if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.NonterminalOrders) {
 			break
 		}
@@ -336,6 +339,9 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 				}
 			}
 
+			ctx.KeyVariables.CommonPrefix = commonPrefix
+			ctx.bury("ExtractCommonPrefix", 3)
+
 			newNonterminal := ctx.Grammer.AddNewNonterminal(nonterminal)
 			newProd := []string{nonterminal}
 			newProd = append(newProd, commonPrefix...)
@@ -348,6 +354,8 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 				newProd = append(newProd, prod[len(commonPrefix)+1:]...)
 				ctx.Grammer.AddNewProduction(newProd)
 			}
+
+			ctx.bury("ExtractCommonPrefix", 4)
 		}
 
 		ctx.KeyVariables.LoopVariableI++
@@ -370,19 +378,24 @@ func (ctx *LLContext) ComputeFirstSet() {
 		ctx.KeyVariables.FirstSet[i] = set.NewStringSet()
 	}
 
+	ctx.bury("ComputeFirstSet", 0)
+
 	// 按照一定顺序排列非终结符
 	ctx.KeyVariables.NonterminalOrders = make([]string, 0)
 	for nonterminal := range ctx.Grammer.Nonterminals {
 		ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, nonterminal)
 	}
 	sort.Strings(ctx.KeyVariables.NonterminalOrders)
+	ctx.bury("ComputeFirstSet", 1)
 
 	ctx.KeyVariables.ModifiedFlag = true
 	for ctx.KeyVariables.ModifiedFlag {
 		ctx.KeyVariables.ModifiedFlag = false
+		ctx.bury("ComputeFirstSet", 2)
 
 		ctx.KeyVariables.LoopVariableI = 0
 		for {
+			ctx.bury("ComputeFirstSet", 3)
 			if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.Productions) {
 				break
 			}
@@ -391,6 +404,7 @@ func (ctx *LLContext) ComputeFirstSet() {
 
 			ctx.KeyVariables.LoopVariableJ = 1
 			for {
+				ctx.bury("ComputeFirstSet", 4)
 				if ctx.KeyVariables.LoopVariableJ >= len(prod) {
 					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
 						ctx.KeyVariables.FirstSet[nonterminal].Put("") > 0
@@ -411,11 +425,16 @@ func (ctx *LLContext) ComputeFirstSet() {
 					break
 				}
 
+				ctx.bury("ComputeFirstSet", 5)
 				ctx.KeyVariables.LoopVariableJ++
 			}
+
+			ctx.bury("ComputeFirstSet", 6)
 			ctx.KeyVariables.LoopVariableI++
 		}
 	}
+
+	ctx.bury("ComputeFirstSet", -1)
 }
 
 func (ctx *LLContext) ComputeFollowSet() {
@@ -425,19 +444,24 @@ func (ctx *LLContext) ComputeFollowSet() {
 		ctx.KeyVariables.FollowSet[i] = set.NewStringSet()
 	}
 
+	ctx.bury("ComputeFollowSet", 0)
+
 	// 按照一定顺序排列非终结符
 	ctx.KeyVariables.NonterminalOrders = make([]string, 0)
 	for nonterminal := range ctx.Grammer.Nonterminals {
 		ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, nonterminal)
 	}
 	sort.Strings(ctx.KeyVariables.NonterminalOrders)
+	ctx.bury("ComputeFollowSet", 1)
 
 	ctx.KeyVariables.ModifiedFlag = true
 	for ctx.KeyVariables.ModifiedFlag {
 		ctx.KeyVariables.ModifiedFlag = false
+		ctx.bury("ComputeFollowSet", 2)
 
 		ctx.KeyVariables.LoopVariableI = 0
 		for {
+			ctx.bury("ComputeFollowSet", 3)
 			if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.Productions) {
 				break
 			}
@@ -448,11 +472,13 @@ func (ctx *LLContext) ComputeFollowSet() {
 			if nonterminal == ctx.Grammer.StartNonterminal {
 				ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
 					ctx.KeyVariables.FollowSet[nonterminal].Put("$") > 0
+				ctx.bury("ComputeFollowSet", 4)
 			}
 
 			// 顺序遍历
 			ctx.KeyVariables.LoopVariableJ = 1
 			for {
+				ctx.bury("ComputeFollowSet", 5)
 				if ctx.KeyVariables.LoopVariableJ >= len(prod) {
 					break
 				}
@@ -464,6 +490,7 @@ func (ctx *LLContext) ComputeFollowSet() {
 				}
 				ctx.KeyVariables.LoopVariableK = ctx.KeyVariables.LoopVariableJ + 1
 				for {
+					ctx.bury("ComputeFollowSet", 6)
 					if ctx.KeyVariables.LoopVariableK >= len(prod) {
 						ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
 							ctx.KeyVariables.FollowSet[current].UnionExcept(
@@ -486,8 +513,11 @@ func (ctx *LLContext) ComputeFollowSet() {
 						break
 					}
 
+					ctx.bury("ComputeFollowSet", 7)
 					ctx.KeyVariables.LoopVariableK++
 				}
+
+				ctx.bury("ComputeFollowSet", 8)
 				ctx.KeyVariables.LoopVariableJ++
 			}
 			ctx.KeyVariables.LoopVariableI++
@@ -503,8 +533,11 @@ func (ctx *LLContext) ComputeSelectSet() {
 		ctx.KeyVariables.SelectSet[i] = set.NewStringSet()
 	}
 
+	ctx.bury("ComputeSelectSet", 0)
+
 	ctx.KeyVariables.LoopVariableI = 0
 	for {
+		ctx.bury("ComputeSelectSet", 1)
 		if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.Productions) {
 			break
 		}
@@ -512,6 +545,7 @@ func (ctx *LLContext) ComputeSelectSet() {
 
 		ctx.KeyVariables.LoopVariableJ = 1
 		for {
+			ctx.bury("ComputeSelectSet", 2)
 			if ctx.KeyVariables.LoopVariableJ >= len(prod) {
 				ctx.KeyVariables.SelectSet[ctx.KeyVariables.LoopVariableI].UnionExcept(ctx.KeyVariables.FollowSet[prod[0]])
 				break
@@ -529,11 +563,15 @@ func (ctx *LLContext) ComputeSelectSet() {
 				break
 			}
 
+			ctx.bury("ComputeSelectSet", 3)
 			ctx.KeyVariables.LoopVariableJ++
 		}
 
+		ctx.bury("ComputeSelectSet", 4)
 		ctx.KeyVariables.LoopVariableI++
 	}
+
+	ctx.bury("ComputeSelectSet", -1)
 }
 
 func (ctx *LLContext) CheckSelectConflict() {
