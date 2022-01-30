@@ -695,16 +695,84 @@ bool Parse(IParser* parser)
 	cppBufWrite.WriteString(fmt.Sprintf(`{
 	std::vector<int> stack;
 	stack.push_back(Nonterminal_%s);
+	int token = parser->Next();
 	while(stack.size() > 0) {
 		int last = stack.back();
-		int token = parser->Next();
 		stack.pop_back();
 		switch(last) {
 `, serials.Map[ctx.Grammer.StartNonterminal].SerialString))
 	for nonterminal := range ctx.Grammer.Nonterminals {
-		cppBufWrite.WriteString(fmt.Sprintf(`\t\t\tcase Nonterminal_%s:
+		cppBufWrite.WriteString(fmt.Sprintf(`			case Nonterminal_%s:
 				switch(token) {
 `, serials.Map[nonterminal].SerialString))
-
+		allSelect := make([]string, 0)
+		for i, prod := range ctx.KeyVariables.Productions {
+			if prod[0] != nonterminal {
+				continue
+			}
+			for terminal := range ctx.KeyVariables.SelectSet[i] {
+				allSelect = append(allSelect, terminal)
+				if terminal == "$" {
+					cppBufWrite.WriteString("\t\t\t\t\tcase TerminalEOF:\n")
+				} else {
+					cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Terminal_%s:\n", serials.Map[terminal].SerialString))
+				}
+			}
+			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser->Infer(Production_%s);\n", prodSerials[i]))
+			for j := len(prod) - 1; j > 0; j-- {
+				if ctx.Grammer.Nonterminals.Contains(prod[j]) {
+					cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstack.push_back(Nonterminal_%s);\n", serials.Map[prod[j]].SerialString))
+				} else {
+					cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstack.push_back(Terminal_%s);\n", serials.Map[prod[j]].SerialString))
+				}
+			}
+			cppBufWrite.WriteString("\t\t\t\t\t\tbreak;\n")
+		}
+		cppBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\tint expected[] = {")
+		for i, v := range allSelect {
+			if i > 0 {
+				cppBufWrite.WriteString(", ")
+			}
+			if v == "$" {
+				cppBufWrite.WriteString("TerminalEOF")
+			} else {
+				cppBufWrite.WriteString(fmt.Sprintf("Terminal_%s", serials.Map[v].SerialString))
+			}
+		}
+		cppBufWrite.WriteString(`};
+						CompileError compileError = {
+							expected, sizeof(expected) / sizeof(int), token
+						};
+						parser->Panic(&compileError);
+						return false;
+					}
+				}
+				break;
+`)
 	}
+	cppBufWrite.WriteString(`			default: {
+				if (last == token) {
+					token = parser->Next();
+					break;
+				}
+				int expected[] = {last};
+				CompileError compileError = {
+					expected, sizeof(expected) / sizeof(int), token
+				};
+				parser->Panic(&compileError);
+				return false;
+			}
+        }
+    }
+    if (token == TerminalEOF) {
+        return true;
+    }
+    int expected[] = {TerminalEOF};
+    CompileError compileError = {
+        expected, sizeof(expected) / sizeof(int), token
+    };
+    parser->Panic(&compileError);
+    return false;
+}
+`)
 }
