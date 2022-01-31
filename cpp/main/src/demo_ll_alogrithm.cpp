@@ -2,8 +2,8 @@
 #include <QCloseEvent>
 #include <QScrollBar>
 
-DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QWidget *parent)
-	: QMainWindow(parent), ui(new Ui::DemoLLWindow) {
+DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code)
+	: QMainWindow(), ui(new Ui::DemoLLWindow) {
 	ui->setupUi(this);
 }
 

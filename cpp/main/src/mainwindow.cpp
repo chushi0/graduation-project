@@ -78,7 +78,7 @@ void MainWindow::actionNewFile() {
 }
 
 void MainWindow::actionAlogLL() {
-	auto w = new DemoLLAlogrithmWindow;
+	auto w = new DemoLLAlogrithmWindow(ui->codeView->text());
 	w->show();
 }
 

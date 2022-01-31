@@ -8,7 +8,7 @@ class DemoLLAlogrithmWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	DemoLLAlogrithmWindow(QWidget *parent = nullptr);
+	DemoLLAlogrithmWindow(QString code);
 	~DemoLLAlogrithmWindow();
 
 protected:

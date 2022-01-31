@@ -23,7 +23,7 @@
       <widget class="QWidget" name="scrollAreaWidgetContents">
        <property name="geometry">
         <rect>
-         <x>-357</x>
+         <x>-379</x>
          <y>0</y>
          <width>1080</width>
          <height>59</height>
@@ -32,6 +32,9 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QCommandLinkButton" name="commandLinkButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>清除左递归</string>
           </property>
@@ -39,6 +42,9 @@
         </item>
         <item>
          <widget class="QCommandLinkButton" name="commandLinkButton_2">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>提取公共前缀</string>
           </property>
@@ -46,6 +52,9 @@
         </item>
         <item>
          <widget class="QCommandLinkButton" name="commandLinkButton_3">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>计算First集</string>
           </property>
@@ -53,6 +62,9 @@
         </item>
         <item>
          <widget class="QCommandLinkButton" name="commandLinkButton_4">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>计算Follow集</string>
           </property>
@@ -60,6 +72,9 @@
         </item>
         <item>
          <widget class="QCommandLinkButton" name="commandLinkButton_5">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>计算Select集</string>
           </property>
@@ -67,6 +82,9 @@
         </item>
         <item>
          <widget class="QCommandLinkButton" name="commandLinkButton_6">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>生成自动机</string>
           </property>
@@ -85,6 +103,21 @@
        </sizepolicy>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <property name="spacing">
+        <number>0</number>
+       </property>
        <item row="0" column="0">
         <widget class="QSplitter" name="splitter">
          <property name="orientation">
@@ -98,6 +131,18 @@
            </sizepolicy>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_2">
              <item>
