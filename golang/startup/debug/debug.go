@@ -98,6 +98,13 @@ func (ctx *DebugContext) RemoveBreakPoint(point *Point) {
 	ctx.BreakPoints = breakPoints
 }
 
+// 清除断点
+func (ctx *DebugContext) ClearBreakPoints() {
+	ctx.Lock.Lock()
+	defer ctx.Lock.Unlock()
+	ctx.BreakPoints = make([]*Point, 0)
+}
+
 // 获取变量
 // 若未暂停，返回 nil
 func (ctx *DebugContext) GetVariables() interface{} {
