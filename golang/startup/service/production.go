@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/chushi0/graduation_project/golang/startup/production"
-	"github.com/chushi0/graduation_project/golang/startup/util/set"
 	"github.com/go-basic/uuid"
 )
 
@@ -98,28 +97,7 @@ func ProcessProductionParse(code string, process *ProductionProcess) {
 	}
 	process.Result.Productions = productions
 	process.Result.Errors = errors
-
-	nonterminals := set.NewStringSet()
-	terminals := set.NewStringSet()
-	for _, production := range productions {
-		if len(production) == 0 {
-			continue
-		}
-		if production[0] != "" {
-			nonterminals.Put(production[0])
-		}
-	}
-	for _, production := range productions {
-		for i := 1; i < len(production); i++ {
-			if production[i] == "" {
-				continue
-			}
-			if nonterminals.Contains(production[i]) {
-				continue
-			}
-			terminals.Put(production[i])
-		}
-	}
+	terminals, nonterminals := production.GetTerminalsAndNonterminals(productions)
 	if process.Interrupt {
 		return
 	}

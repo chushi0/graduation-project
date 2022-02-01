@@ -1,5 +1,7 @@
 package production
 
+import "github.com/chushi0/graduation_project/golang/startup/util/set"
+
 // 词法分析自动机
 var fa *FiniteAutomaton
 
@@ -13,7 +15,7 @@ const (
 func init() {
 	identify := NewFinateAutomatonFromRegexpOrPanic([]rune("([a-z]|[A-Z]|[0-9]|\\_)([a-z]|[A-Z]|[0-9]|\\_|\\')*"))
 	product := NewFinateAutomatonFromRegexpOrPanic([]rune(":="))
-	asciiSymbol := NewFinateAutomatonFromRegexpOrPanic([]rune("+|-|\\*|/|=|\\(|\\)|;|!|@|#|$|%|^|&|\\[|]|{|}|:|'|<|>|,|\\.|?|\\||~|`"))
+	asciiSymbol := NewFinateAutomatonFromRegexpOrPanic([]rune("+|-|\\*|/|=|\\(|\\)|;|!|@|#|%|^|&|\\[|]|{|}|:|'|<|>|,|\\.|?|\\||~|`"))
 	escape := NewFinateAutomatonFromRegexpOrPanic([]rune("\"([\\u0000-\\u0009]|[\\u000B-\\u0021]|[\\u0023-\\u005B]|[\\u005D-\\uFFFF]|\\\\\\.)*\"")) // \u0022 = "
 
 	identify.SetAcceptTag(tagIdentify)
@@ -122,4 +124,29 @@ func ParseProduction(code string, interruptFlag *bool) ([]Production, *ErrorCont
 		result = append(result, lastProduction)
 	}
 	return result, lexer.ErrorContainer
+}
+
+func GetTerminalsAndNonterminals(productions []Production) (terminals, nonterminals set.StringSet) {
+	nonterminals = set.NewStringSet()
+	terminals = set.NewStringSet()
+	for _, production := range productions {
+		if len(production) == 0 {
+			continue
+		}
+		if production[0] != "" {
+			nonterminals.Put(production[0])
+		}
+	}
+	for _, production := range productions {
+		for i := 1; i < len(production); i++ {
+			if production[i] == "" {
+				continue
+			}
+			if nonterminals.Contains(production[i]) {
+				continue
+			}
+			terminals.Put(production[i])
+		}
+	}
+	return
 }
