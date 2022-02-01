@@ -8,7 +8,7 @@ if defined INSTALL_PATH (
 
 set WORKSPACE=%cd%
 
-del /F /S /Q "%INSTALL_PATH%" > NUL 2> NUL
+rd /S /Q "%INSTALL_PATH%" > NUL 2> NUL
 mkdir %INSTALL_PATH% > NUL 2> NUL
 
 cd %WORKSPACE%\cpp\main
@@ -24,3 +24,6 @@ for %%i in (*.dll) do "%QT_BIN%\windeployqt" "%%i"
 for %%i in (*.exe) do "%QT_BIN%\windeployqt" "%%i"
 
 cd %WORKSPACE%
+
+mkdir %INSTALL_PATH%\assets > NUL 2> NUL
+xcopy assets %INSTALL_PATH%\assets /E /Y > NUL 2> NUL

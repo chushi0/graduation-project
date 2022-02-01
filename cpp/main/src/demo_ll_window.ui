@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DemoLLWindow</class>
+ <widget class="QMainWindow" name="DemoLLWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>738</width>
+    <height>492</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>LL 自动机演示</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="HorizontalScrollArea" name="scrollArea">
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>-379</x>
+         <y>0</y>
+         <width>1080</width>
+         <height>59</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QCommandLinkButton" name="commandLinkButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>清除左递归</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCommandLinkButton" name="commandLinkButton_2">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>提取公共前缀</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCommandLinkButton" name="commandLinkButton_3">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>计算First集</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCommandLinkButton" name="commandLinkButton_4">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>计算Follow集</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCommandLinkButton" name="commandLinkButton_5">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>计算Select集</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCommandLinkButton" name="commandLinkButton_6">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>生成自动机</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QWidget" name="widget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QSplitter" name="splitter">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <widget class="QWidget" name="widget_2" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QToolButton" name="toolButton_2">
+               <property name="text">
+                <string>运行</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="toolButton">
+               <property name="text">
+                <string>单步</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="toolButton_3">
+               <property name="text">
+                <string>运行到光标</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QListWidget" name="listWidget">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+             <item>
+              <property name="text">
+               <string>按照某顺序排列非终结符</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>循环 i 从 1 到 n</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>    循环 j 从 1 到 i-1</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>        将 A[i] -&gt; A[j]r 替换为 A[i] -&gt; Br（A[j] -&gt; B）</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>    消除 A[i] 的立即左递归</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="widget_3" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>3</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HorizontalScrollArea</class>
+   <extends>QScrollArea</extends>
+   <header>view/HorizontalScrollArea.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "Qsci/qscilexercpp.h"
+#include "demo_ll_alogrithm.h"
 #include "ipc/base.h"
 #include "ipc/ipc.h"
 #include <QCloseEvent>
@@ -38,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui->actionNewFile, &QAction::triggered, this,
 			&MainWindow::actionNewFile);
 	connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
+	connect(ui->actionLL, &QAction::triggered, this, &MainWindow::actionAlogLL);
 }
 
 MainWindow::~MainWindow() {
@@ -65,6 +67,7 @@ void MainWindow::codeChange() {
 		ipc::ProductionParseCancel(parseId);
 	}
 	parseId = ipc::ProductionParseStart(ui->codeView->text());
+	ui->statusbar->showMessage("正在解析产生式代码...");
 	receiveProduction();
 }
 
@@ -72,6 +75,11 @@ void MainWindow::actionNewFile() {
 	auto w = new MainWindow();
 	w->show();
 	w->activateWindow();
+}
+
+void MainWindow::actionAlogLL() {
+	auto w = new DemoLLAlogrithmWindow(ui->codeView->text());
+	w->show();
 }
 
 void MainWindow::receiveProduction() {
@@ -84,6 +92,9 @@ void MainWindow::receiveProduction() {
 		return;
 	}
 	parseId = "";
+	ui->statusbar->showMessage(QString("%1 个错误，%2 个警告")
+								   .arg(result.errors.size())
+								   .arg(result.warnings.size()));
 
 	updateList(ui->nonterminalList, result.nonterminals);
 	updateList(ui->terminalList, result.terminals);
