@@ -105,26 +105,15 @@ func (ctx *DebugContext) ClearBreakPoints() {
 	ctx.BreakPoints = make([]*Point, 0)
 }
 
-// 获取变量
-// 若未暂停，返回 nil
-func (ctx *DebugContext) GetVariables() interface{} {
+// 获取变量和执行点
+// 若未暂停，返回 nil, nil
+func (ctx *DebugContext) GetVariables() (interface{}, *Point) {
 	ctx.Lock.Lock()
 	defer ctx.Lock.Unlock()
 	if ctx.DebugRunMode == RunMode_Paused {
-		return ctx.Variables
+		return ctx.Variables, ctx.CurrentPoint
 	}
-	return nil
-}
-
-// 获取当前执行点
-// 若未暂停，返回 nil
-func (ctx *DebugContext) GetCurrentPoint() *Point {
-	ctx.Lock.Lock()
-	defer ctx.Lock.Unlock()
-	if ctx.DebugRunMode == RunMode_Paused {
-		return ctx.CurrentPoint
-	}
-	return nil
+	return nil, nil
 }
 
 // 获取当前运行模式

@@ -119,13 +119,14 @@ func LLProcessGetVariables(req json.RawMessage) (code int, resp interface{}, err
 		code = 1001
 		return
 	}
-	variables := proc.DebugContext.GetVariables()
+	variables, point := proc.DebugContext.GetVariables()
 	if variables == nil {
 		code = 1003
 		return
 	}
 	resp = map[string]interface{}{
-		"var": variables,
+		"var":   variables,
+		"point": point,
 	}
 	return
 }

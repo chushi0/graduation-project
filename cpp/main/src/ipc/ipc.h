@@ -14,5 +14,5 @@ namespace ipc {
 	void LLProcessSwitchMode(QString id, int mode);
 	void LLProcessRelease(QString id);
 	void LLProcessSetBreakpoints(QString id, QList<Breakpoint> breakpoints);
-	bool LLProcessGetVariables(QString id, LLBreakpointVariables *variables);
+	bool LLProcessGetVariables(QString id, LLBreakpointVariables *variables, Breakpoint* point);
 } // namespace ipc

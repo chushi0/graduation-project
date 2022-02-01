@@ -95,17 +95,18 @@ void ipc::LLProcessSetBreakpoints(QString id, QList<Breakpoint> breakpoints) {
 	data["id"] = id;
 	data["breakpoints"] = array;
 	QJsonObject wrap;
-	wrap["action"] = "ll_process_release";
+	wrap["action"] = "ll_process_setbreakpoints";
 	wrap["data"] = data;
 	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
 	auto resp = RpcRequest(req);
 }
 
-bool ipc::LLProcessGetVariables(QString id, LLBreakpointVariables *variables) {
+bool ipc::LLProcessGetVariables(QString id, LLBreakpointVariables *variables,
+								Breakpoint *point) {
 	QJsonObject data;
 	data["id"] = id;
 	QJsonObject wrap;
-	wrap["action"] = "ll_process_release";
+	wrap["action"] = "ll_process_variables";
 	wrap["data"] = data;
 	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
 	auto resp = RpcRequest(req);
@@ -114,5 +115,7 @@ bool ipc::LLProcessGetVariables(QString id, LLBreakpointVariables *variables) {
 		return false;
 	}
 	ipc::parseLLVariables(var.toObject(), variables);
+	point->name = resp.Data["point"].toObject()["name"].toString();
+	point->line = resp.Data["point"].toObject()["line"].toInt();
 	return true;
 }
