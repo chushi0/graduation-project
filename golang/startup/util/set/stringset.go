@@ -1,5 +1,7 @@
 package set
 
+import "encoding/json"
+
 type StringSet map[string]interface{}
 
 func NewStringSet(val ...string) StringSet {
@@ -75,4 +77,12 @@ func (s StringSet) Intersection(o StringSet) StringSet {
 		}
 	}
 	return res
+}
+
+func (s StringSet) MarshalJSON() ([]byte, error) {
+	arr := make([]string, 0, len(s))
+	for v := range s {
+		arr = append(arr, v)
+	}
+	return json.Marshal(arr)
 }

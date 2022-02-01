@@ -8,7 +8,7 @@ void ipc::parseJsonArrayToStringList(QJsonArray array, QStringList *list) {
 	*list = result;
 }
 
-void ipc::parseProductions(QJsonArray array, QList<QStringList> *list) {
+void ipc::parseStringListList(QJsonArray array, QList<QStringList> *list) {
 	QList<QStringList> result;
 	for (auto i : array) {
 		QStringList item;
@@ -32,4 +32,28 @@ void ipc::parseErrors(QJsonArray array, QList<ipc::ErrorType> *list) {
 		result.append(error);
 	}
 	*list = result;
+}
+
+void ipc::parseLLVariables(QJsonObject object, LLBreakpointVariables *out) {
+	parseStringListList(object["productions"].toArray(), &out->productions);
+	out->loopVariableI = object["loop_variable_i"].toInt();
+	out->loopVariableJ = object["loop_variable_j"].toInt();
+	out->loopVariableK = object["loop_variable_k"].toInt();
+	out->modifiedFlag = object["modified_flag"].toBool();
+	parseJsonArrayToStringList(object["nonterminal_orders"].toArray(),
+							   &out->nonterminalOrders);
+	parseJsonArrayToStringList(object["current_process_production"].toArray(),
+							   &out->currentProcessProduction);
+	parseJsonArrayToStringList(object["common_prefix"].toArray(),
+							   &out->commonPrefix);
+	parseHashStringStringList(object["first"].toObject(), &out->firstSet);
+	parseHashStringStringList(object["follow"].toObject(), &out->followSet);
+	parseStringListList(object["select"].toArray(), &out->selectSet);
+}
+
+void ipc::parseHashStringStringList(QJsonObject object,
+									QHash<QString, QStringList> *out) {
+	for (auto &k : object.keys()) {
+		ipc::parseJsonArrayToStringList(object[k].toArray(), &(*out)[k]);
+	}
 }
