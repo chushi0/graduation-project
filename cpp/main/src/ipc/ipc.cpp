@@ -100,3 +100,19 @@ void ipc::LLProcessSetBreakpoints(QString id, QList<Breakpoint> breakpoints) {
 	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
 	auto resp = RpcRequest(req);
 }
+
+bool ipc::LLProcessGetVariables(QString id, LLBreakpointVariables *variables) {
+	QJsonObject data;
+	data["id"] = id;
+	QJsonObject wrap;
+	wrap["action"] = "ll_process_release";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
+	auto var = resp.Data["var"];
+	if (var.isNull()) {
+		return false;
+	}
+	ipc::parseLLVariables(var.toObject(), variables);
+	return true;
+}

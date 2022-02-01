@@ -124,6 +124,8 @@ func LLProcessGetVariables(req json.RawMessage) (code int, resp interface{}, err
 		code = 1003
 		return
 	}
-	resp = variables
+	resp = map[string]interface{}{
+		"var": variables,
+	}
 	return
 }
