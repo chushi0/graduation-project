@@ -18,6 +18,9 @@ protected:
 private slots:
 	void processCheck();
 
+	void runButtonTrigger();
+	void stepButtonTrigger();
+
 private:
 	enum ProcessStatus { Run, Pause, Exit };
 

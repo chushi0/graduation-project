@@ -3,6 +3,7 @@
 #include "ipc/ipc.h"
 #include <QCloseEvent>
 #include <QScrollBar>
+#include <windows.h>
 
 DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code)
 	: QMainWindow(), ui(new Ui::DemoLLWindow) {
@@ -12,6 +13,12 @@ DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code)
 	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModeRun);
 	status = Run;
 	processCheck();
+
+	connect(ui->runButton, &QToolButton::clicked, this,
+			&DemoLLAlogrithmWindow::runButtonTrigger);
+	connect(ui->stepButton, &QToolButton::clicked, this,
+			&DemoLLAlogrithmWindow::stepButtonTrigger);
+
 	codeAnalyseTimer.start(100);
 	connect(&codeAnalyseTimer, &QTimer::timeout, this,
 			&DemoLLAlogrithmWindow::processCheck);
@@ -48,7 +55,26 @@ void DemoLLAlogrithmWindow::processCheck() {
 	ipc::LLBreakpointVariables vars;
 	ipc::Breakpoint point;
 	auto paused = ipc::LLProcessGetVariables(processId, &vars, &point);
-	if (paused) {
-		status = Pause;
+	if (!paused) {
+		return;
 	}
+	status = Pause;
+	MessageBoxA(NULL, "Paused", "Paused", MB_OK);
+}
+
+void DemoLLAlogrithmWindow::runButtonTrigger() {
+	if (status != Pause || processId.isEmpty()) {
+		return;
+	}
+	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModeRun);
+	status = Run;
+}
+
+void DemoLLAlogrithmWindow::stepButtonTrigger() {
+	if (status != Pause || processId.isEmpty()) {
+		return;
+	}
+	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModePause);
+	status = Run;
+	processCheck();
 }
