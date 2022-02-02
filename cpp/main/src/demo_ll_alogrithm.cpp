@@ -3,7 +3,6 @@
 #include "ipc/ipc.h"
 #include <QCloseEvent>
 #include <QScrollBar>
-#include <windows.h>
 
 DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code)
 	: QMainWindow(), ui(new Ui::DemoLLWindow) {
@@ -55,11 +54,16 @@ void DemoLLAlogrithmWindow::processCheck() {
 	ipc::LLBreakpointVariables vars;
 	ipc::Breakpoint point;
 	auto paused = ipc::LLProcessGetVariables(processId, &vars, &point);
-	if (!paused) {
+	if (paused) {
+		status = Pause;
 		return;
 	}
-	status = Pause;
-	MessageBoxA(NULL, "Paused", "Paused", MB_OK);
+	auto exit = ipc::LLProcessExit(processId);
+	if (exit) {
+		status = Exit;
+		ipc::LLProcessRelease(processId);
+		processId = "";
+	}
 }
 
 void DemoLLAlogrithmWindow::runButtonTrigger() {

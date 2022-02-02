@@ -20,6 +20,7 @@ func init() {
 	RegisteService("ll_process_release", LLProcessRelease)
 	RegisteService("ll_process_setbreakpoints", LLProcessSetBreakpoints)
 	RegisteService("ll_process_variables", LLProcessGetVariables)
+	RegisteService("ll_process_exit", LLProcessGetExitResult)
 }
 
 func LLProcessRequest(req json.RawMessage) (code int, resp interface{}, err error) {
@@ -128,5 +129,26 @@ func LLProcessGetVariables(req json.RawMessage) (code int, resp interface{}, err
 		"var":   variables,
 		"point": point,
 	}
+	return
+}
+
+func LLProcessGetExitResult(req json.RawMessage) (code int, resp interface{}, err error) {
+	var reqStruct struct {
+		ID string `json:"id"`
+	}
+	err = json.Unmarshal(req, &reqStruct)
+	if err != nil {
+		return
+	}
+	proc, exist := llProcess[reqStruct.ID]
+	if !exist {
+		code = 1001
+		return
+	}
+	if proc.DebugContext.GetCurrentRunMode() != debug.RunMode_Exit {
+		code = 1004
+		return
+	}
+	resp = proc.DebugContext.ExitResult
 	return
 }

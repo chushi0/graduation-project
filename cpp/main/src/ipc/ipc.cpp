@@ -110,12 +110,25 @@ bool ipc::LLProcessGetVariables(QString id, LLBreakpointVariables *variables,
 	wrap["data"] = data;
 	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
 	auto resp = RpcRequest(req);
-	auto var = resp.Data["var"];
-	if (var.isNull()) {
+	if (resp.ResponseCode == 1003) {
 		return false;
 	}
-	ipc::parseLLVariables(var.toObject(), variables);
+	ipc::parseLLVariables(resp.Data["var"].toObject(), variables);
 	point->name = resp.Data["point"].toObject()["name"].toString();
 	point->line = resp.Data["point"].toObject()["line"].toInt();
+	return true;
+}
+
+bool ipc::LLProcessExit(QString id) {
+	QJsonObject data;
+	data["id"] = id;
+	QJsonObject wrap;
+	wrap["action"] = "ll_process_exit";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
+	if (resp.ResponseCode == 1004) {
+		return false;
+	}
 	return true;
 }
