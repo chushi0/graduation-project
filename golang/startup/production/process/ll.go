@@ -29,8 +29,10 @@ type LLKeyVariables struct {
 	LoopVariableK int                     `json:"loop_variable_k"`
 	ModifiedFlag  bool                    `json:"modified_flag"`
 
-	NonterminalOrders        []string              `json:"nonterminal_orders"`
-	CurrentProcessProduction production.Production `json:"current_process_production"`
+	NonterminalOrders        []string                `json:"nonterminal_orders"`
+	CurrentProcessProduction production.Production   `json:"current_process_production"`
+	RemoveProduction         []production.Production `json:"remove_production"`
+	AddProduction            []production.Production `json:"add_production"`
 
 	CommonPrefix []string `json:"common_prefix"`
 
@@ -161,17 +163,6 @@ func (ctx *LLContext) ParseCode() {
  *     循环 j 从 1 到 i-1
  *         将 A[i]->A[j]γ 替换为 A[i]->δγ，其中A[j]->δ
  *     清除A[i]的直接左递归
- *
- * 断点解释：
- * 1 - 非终结符排列完毕
- * 2 - i 变动
- * 3 - j 变动
- * 4 - 即将对产生式处理
- * 5 - 产生式处理完毕
- * 6 - j 循环完毕
- * 7 - 跳过清除左递归
- * 8 - 即将处理产生式
- * 9 - 清除左递归完成
  */
 func (ctx *LLContext) RemoveLeftRecusion() {
 	ctx.bury("RemoveLeftRecusion", 0)
@@ -223,6 +214,7 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 			ctx.KeyVariables.LoopVariableJ++
 		}
 		ctx.bury("RemoveLeftRecusion", 6)
+		ctx.KeyVariables.LoopVariableJ = 0
 
 		// 清除A[i]的直接左递归
 		skip := true
