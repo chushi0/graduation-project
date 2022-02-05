@@ -253,7 +253,7 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 		newNonterminal := ctx.Grammer.AddNewNonterminal(A)
 		ctx.Grammer.AddNewProduction([]string{newNonterminal})
 		for _, prod := range utilslice.CopyStringSlice(ctx.KeyVariables.Productions) {
-			if prod[0] != "A" {
+			if prod[0] != A {
 				continue
 			}
 			ctx.KeyVariables.CurrentProcessProduction = prod
