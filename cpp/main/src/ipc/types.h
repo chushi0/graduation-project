@@ -39,6 +39,8 @@ namespace ipc {
 		bool modifiedFlag;
 		QStringList nonterminalOrders;
 		QStringList currentProcessProduction;
+		QList<QStringList> removeProductions;
+		QList<QStringList> addProductions;
 		QStringList commonPrefix;
 		QHash<QString, QStringList> firstSet, followSet;
 		QList<QStringList> selectSet;

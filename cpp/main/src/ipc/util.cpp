@@ -44,6 +44,10 @@ void ipc::parseLLVariables(QJsonObject object, LLBreakpointVariables *out) {
 							   &out->nonterminalOrders);
 	parseJsonArrayToStringList(object["current_process_production"].toArray(),
 							   &out->currentProcessProduction);
+	parseStringListList(object["remove_production"].toArray(),
+						&out->removeProductions);
+	parseStringListList(object["add_production"].toArray(),
+						&out->addProductions);
 	parseJsonArrayToStringList(object["common_prefix"].toArray(),
 							   &out->commonPrefix);
 	parseHashStringStringList(object["first"].toObject(), &out->firstSet);

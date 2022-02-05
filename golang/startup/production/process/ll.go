@@ -173,6 +173,12 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 		ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, nonterminal)
 	}
 	sort.Strings(ctx.KeyVariables.NonterminalOrders)
+	// 按照排列好的顺序排列产生式
+	sortProductions := make([]production.Production, 0)
+	for _, nonterminal := range ctx.KeyVariables.NonterminalOrders {
+		sortProductions = append(sortProductions, ctx.Grammer.Productions[nonterminal]...)
+	}
+	ctx.KeyVariables.Productions = sortProductions
 	ctx.bury("RemoveLeftRecusion", 1)
 
 	// 循环 i 从 1 到 n
@@ -194,21 +200,34 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 			B := ctx.KeyVariables.NonterminalOrders[ctx.KeyVariables.LoopVariableJ-1]
 
 			// 将 A[i]->A[j]γ 替换为 A[i]->δγ，其中A[j]->δ
-			dumpProductions := utilslice.CopyStringSlice(ctx.Grammer.Productions[A])
+			dumpProductions := utilslice.CopyStringSlice(ctx.KeyVariables.Productions)
 			for _, prod := range dumpProductions {
+				if prod[0] != A {
+					continue
+				}
 				ctx.KeyVariables.CurrentProcessProduction = prod
+				ctx.KeyVariables.RemoveProduction = make([][]string, 0)
+				ctx.KeyVariables.AddProduction = make([][]string, 0)
 				ctx.bury("RemoveLeftRecusion", 4)
+				ctx.KeyVariables.CurrentProcessProduction = nil
 				if len(prod) > 1 && prod[1] == B {
-					ctx.Grammer.RemoveProduction(prod)
+					ctx.KeyVariables.RemoveProduction = append(ctx.KeyVariables.RemoveProduction, prod)
 					for _, bprod := range ctx.Grammer.Productions[B] {
 						newProd := make([]string, 0)
 						newProd = append(newProd, A)
 						newProd = append(newProd, bprod[1:]...)
 						newProd = append(newProd, prod[2:]...)
-						ctx.Grammer.AddNewProduction(newProd)
+						ctx.KeyVariables.AddProduction = append(ctx.KeyVariables.AddProduction, newProd)
 					}
 					ctx.bury("RemoveLeftRecusion", 5)
+					ctx.Grammer.RemoveProduction(ctx.KeyVariables.RemoveProduction[0])
+					for _, prod := range ctx.KeyVariables.AddProduction {
+						ctx.Grammer.AddNewProduction(prod)
+					}
+					ctx.KeyVariables.Productions = utilslice.ReplaceStringArray(ctx.KeyVariables.Productions, prod, ctx.KeyVariables.AddProduction...)
 				}
+				ctx.KeyVariables.RemoveProduction = make([][]string, 0)
+				ctx.KeyVariables.AddProduction = make([][]string, 0)
 			}
 
 			ctx.KeyVariables.LoopVariableJ++
@@ -233,8 +252,13 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 
 		newNonterminal := ctx.Grammer.AddNewNonterminal(A)
 		ctx.Grammer.AddNewProduction([]string{newNonterminal})
-		for _, prod := range utilslice.CopyStringSlice(ctx.Grammer.Productions[A]) {
+		for _, prod := range utilslice.CopyStringSlice(ctx.KeyVariables.Productions) {
+			if prod[0] != "A" {
+				continue
+			}
 			ctx.KeyVariables.CurrentProcessProduction = prod
+			ctx.KeyVariables.RemoveProduction = make([][]string, 0)
+			ctx.KeyVariables.AddProduction = make([][]string, 0)
 			ctx.bury("RemoveLeftRecusion", 8)
 
 			if len(prod) > 1 && prod[1] == A {
@@ -242,16 +266,18 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 				newProd := []string{newNonterminal}
 				newProd = append(newProd, prod[2:]...)
 				newProd = append(newProd, newNonterminal)
-				ctx.Grammer.AddNewProduction(newProd)
-				// 移除原产生式
-				ctx.Grammer.RemoveProduction(prod)
+				ctx.KeyVariables.AddProduction = append(ctx.KeyVariables.AddProduction, newProd)
+				ctx.KeyVariables.RemoveProduction = append(ctx.KeyVariables.RemoveProduction, prod)
 			} else {
 				newProd := append(prod, newNonterminal)
-				ctx.Grammer.AddNewProduction(newProd)
-				ctx.Grammer.RemoveProduction(prod)
+				ctx.KeyVariables.AddProduction = append(ctx.KeyVariables.AddProduction, newProd)
+				ctx.KeyVariables.RemoveProduction = append(ctx.KeyVariables.RemoveProduction, prod)
 			}
 
 			ctx.bury("RemoveLeftRecusion", 9)
+			ctx.Grammer.RemoveProduction(ctx.KeyVariables.RemoveProduction[0])
+			ctx.Grammer.AddNewProduction(ctx.KeyVariables.AddProduction[0])
+			ctx.KeyVariables.Productions = utilslice.ReplaceStringArray(ctx.KeyVariables.Productions, ctx.KeyVariables.RemoveProduction[0], ctx.KeyVariables.AddProduction...)
 		}
 
 		ctx.KeyVariables.LoopVariableI++

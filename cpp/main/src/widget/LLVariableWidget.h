@@ -22,4 +22,8 @@ private:
 	bool variableValid;
 
 	float x, y;
+
+private:
+	bool isNonterminalEqual(int index, QString nonterminal);
+	bool isRemoveProduction(QStringList prod);
 };
