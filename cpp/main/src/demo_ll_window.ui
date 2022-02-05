@@ -146,19 +146,6 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_2">
              <item>
-              <widget class="QToolButton" name="runButton">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>运行</string>
-               </property>
-              </widget>
-             </item>
-             <item>
               <widget class="QToolButton" name="stepButton">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -167,7 +154,20 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>单步</string>
+                <string>单步执行</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="runButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>运行到下一算法</string>
                </property>
               </widget>
              </item>
@@ -180,7 +180,7 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>运行到光标</string>
+                <string>运行到选中步骤</string>
                </property>
               </widget>
              </item>

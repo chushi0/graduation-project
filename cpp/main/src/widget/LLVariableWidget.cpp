@@ -110,6 +110,7 @@ void LLVariableWidget::paintEvent(QPaintEvent *) {
 				}
 				painter.drawText(0, y, prod);
 			}
+			painter.setPen(QColor(0, 0, 0));
 		}
 		y += height;
 	}

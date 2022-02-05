@@ -245,7 +245,6 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 		}
 
 		if skip {
-			ctx.bury("RemoveLeftRecusion", 7)
 			ctx.KeyVariables.LoopVariableI++
 			continue
 		}
