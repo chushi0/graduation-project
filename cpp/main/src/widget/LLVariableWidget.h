@@ -15,6 +15,9 @@ public:
 
 protected:
 	virtual void paintEvent(QPaintEvent *) override;
+	virtual void mousePressEvent(QMouseEvent *) override;
+	virtual void mouseReleaseEvent(QMouseEvent *) override;
+	virtual void mouseMoveEvent(QMouseEvent *) override;
 
 private:
 	ipc::LLBreakpointVariables variable;
@@ -22,6 +25,8 @@ private:
 	bool variableValid;
 
 	float x, y;
+	float lastMouseX, lastMouseY;
+	bool mousePressed;
 
 private:
 	bool isNonterminalEqual(int index, QString nonterminal);

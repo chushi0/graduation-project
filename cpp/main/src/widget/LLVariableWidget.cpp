@@ -1,9 +1,10 @@
 #include "LLVariableWidget.h"
 #include <QColor>
+#include <QMouseEvent>
 #include <QPainter>
 
 LLVariableWidget::LLVariableWidget(QWidget *parent)
-	: QWidget(parent), variableValid(false), x(0), y(0) {
+	: QWidget(parent), variableValid(false), x(0), y(0), mousePressed(false) {
 }
 
 LLVariableWidget::~LLVariableWidget() {
@@ -18,7 +19,7 @@ void LLVariableWidget::setVariableAndPoint(
 	update();
 }
 
-void LLVariableWidget::paintEvent(QPaintEvent *) {
+void LLVariableWidget::paintEvent(QPaintEvent *event) {
 	QPainter painter(this);
 	if (!variableValid) {
 		return;
@@ -132,4 +133,27 @@ bool LLVariableWidget::isRemoveProduction(QStringList prod) {
 		}
 	}
 	return false;
+}
+
+void LLVariableWidget::mousePressEvent(QMouseEvent *event) {
+	mousePressed = true;
+	lastMouseX = event->x();
+	lastMouseY = event->y();
+}
+
+void LLVariableWidget::mouseReleaseEvent(QMouseEvent *) {
+	mousePressed = false;
+}
+
+void LLVariableWidget::mouseMoveEvent(QMouseEvent *event) {
+	if (!mousePressed) {
+		return;
+	}
+	float x = event->x();
+	float y = event->y();
+	this->x += x - lastMouseX;
+	this->y += y - lastMouseY;
+	lastMouseX = x;
+	lastMouseY = y;
+	update();
 }

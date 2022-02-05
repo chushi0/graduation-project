@@ -207,6 +207,9 @@
             <pointsize>14</pointsize>
            </font>
           </property>
+          <property name="cursor">
+           <cursorShape>OpenHandCursor</cursorShape>
+          </property>
          </widget>
         </widget>
        </item>
