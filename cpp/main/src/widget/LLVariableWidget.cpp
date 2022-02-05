@@ -99,8 +99,8 @@ void LLVariableWidget::paintEvent(QPaintEvent *) {
 		painter.drawText(0, y, prod);
 		if (isRemoveProduction(arrProd)) {
 			painter.setPen(QColor(0, 0, 0));
-			painter.drawLine(0, y - bounding.height() / 2, bounding.width(),
-							 y - bounding.height() / 2);
+			auto lineY = y + bounding.top() + bounding.height() / 2;
+			painter.drawLine(0, lineY, bounding.width(), lineY);
 			painter.setPen(QColor(0, 0xff, 0, 0xaa));
 			for (auto arrProd : variable.addProductions) {
 				y += height;
