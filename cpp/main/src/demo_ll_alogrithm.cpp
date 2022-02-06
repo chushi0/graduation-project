@@ -43,7 +43,7 @@ void DemoLLAlogrithmWindow::setProcessBreakpoint() {
 						   "ComputeSelectSet"};
 	for (auto name : names) {
 		breakpoints << ipc::Breakpoint{name, 0};
-		breakpoints << ipc::Breakpoint{name, -1};
+		// breakpoints << ipc::Breakpoint{name, -1};
 	}
 	ipc::LLProcessSetBreakpoints(processId, breakpoints);
 }
@@ -89,11 +89,13 @@ void DemoLLAlogrithmWindow::stepButtonTrigger() {
 void DemoLLAlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 	auto name = point.name;
 	if (name == "RemoveLeftRecusion") {
-		setupPointRemoveLeftRecusicn(point.line);
+		setupPointRemoveLeftRecusion(point.line);
+	} else if (name == "ExtractCommonPrefix") {
+		setupPointExtractCommonPrefix(point.line);
 	}
 }
 
-void DemoLLAlogrithmWindow::setupPointRemoveLeftRecusicn(int line) {
+void DemoLLAlogrithmWindow::setupPointRemoveLeftRecusion(int line) {
 	clearListItemBackground();
 	switch (line) {
 		case 0:
@@ -124,11 +126,39 @@ void DemoLLAlogrithmWindow::setupPointRemoveLeftRecusicn(int line) {
 		case 6:
 		case 7:
 		case 8:
+		case 9:
 			highlightListItem(4);
 			break;
-		case 9:
 		case -1:
 			highlightListItem(5);
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::setupPointExtractCommonPrefix(int line) {
+	clearListItemBackground();
+	switch (line) {
+		case 0:
+			{
+				QStringList list;
+				list << "按照一定顺序排列非终结符";
+				list << "循环 i 从 1 到 n";
+				list << "    循环提取最短的公共前缀";
+				list << "";
+				setAlogContent(list);
+				highlightListItem(0);
+				break;
+			}
+		case 1:
+		case 2:
+			highlightListItem(1);
+			break;
+		case 3:
+		case 4:
+			highlightListItem(2);
+			break;
+		case -1:
+			highlightListItem(3);
 			break;
 	}
 }

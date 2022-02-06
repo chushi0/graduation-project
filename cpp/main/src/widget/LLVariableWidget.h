@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ipc/types.h"
+#include <QPainter>
 #include <QWidget>
 
 class LLVariableWidget : public QWidget {
@@ -29,6 +30,21 @@ private:
 	bool mousePressed;
 
 private:
+	struct PaintContext {
+		QPainter *painter;
+		QFont *normalFont, *smallFont;
+		QFontMetrics *normalFontMetrics, *smallFontMetrics;
+	};
+
+private:
 	bool isNonterminalEqual(int index, QString nonterminal);
+	bool isProdPrefixEqual(QStringList prod);
 	bool isRemoveProduction(QStringList prod);
+	QList<QStringList> showAfterProductionDraw(QStringList prod);
+
+	void paintRemoveLeftRecusion(const PaintContext &ctx);
+	void paintExtractCommonPrefix(const PaintContext &ctx);
+
+	void paintNonterminalOrder(const PaintContext &ctx);
+	void paintProductionList(const PaintContext &ctx, bool autoDisableColor);
 };

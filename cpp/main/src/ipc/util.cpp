@@ -48,6 +48,8 @@ void ipc::parseLLVariables(QJsonObject object, LLBreakpointVariables *out) {
 						&out->removeProductions);
 	parseStringListList(object["add_production"].toArray(),
 						&out->addProductions);
+	parseReplaceProductionArray(object["replace_production"].toArray(),
+								&out->replaceProduction);
 	parseJsonArrayToStringList(object["common_prefix"].toArray(),
 							   &out->commonPrefix);
 	parseHashStringStringList(object["first"].toObject(), &out->firstSet);
@@ -59,5 +61,20 @@ void ipc::parseHashStringStringList(QJsonObject object,
 									QHash<QString, QStringList> *out) {
 	for (auto &k : object.keys()) {
 		ipc::parseJsonArrayToStringList(object[k].toArray(), &(*out)[k]);
+	}
+}
+
+void ipc::parseReplaceProduction(QJsonObject object, ReplaceProduction *out) {
+	parseJsonArrayToStringList(object["original"].toArray(), &out->original);
+	parseJsonArrayToStringList(object["replace"].toArray(), &out->replace);
+}
+
+void ipc::parseReplaceProductionArray(QJsonArray array,
+									  QList<ReplaceProduction> *out) {
+	for (auto i : array) {
+		auto o = i.toObject();
+		ReplaceProduction rp;
+		parseReplaceProduction(o, &rp);
+		out->append(rp);
 	}
 }

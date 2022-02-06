@@ -33,6 +33,7 @@ type LLKeyVariables struct {
 	CurrentProcessProduction production.Production   `json:"current_process_production"`
 	RemoveProduction         []production.Production `json:"remove_production"`
 	AddProduction            []production.Production `json:"add_production"`
+	ReplaceProduction        []ReplaceProduction     `json:"replace_production"`
 
 	CommonPrefix []string `json:"common_prefix"`
 
@@ -45,6 +46,11 @@ type LLResult struct {
 	Code      int                    `json:"code"`
 	Detail    map[string]interface{} `json:"detail"`
 	Variables *LLKeyVariables        `json:"variables"`
+}
+
+type ReplaceProduction struct {
+	Original production.Production `json:"original"`
+	Replace  production.Production `json:"replace"`
 }
 
 const (
@@ -205,12 +211,9 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 				if prod[0] != A {
 					continue
 				}
-				ctx.KeyVariables.CurrentProcessProduction = prod
-				ctx.KeyVariables.RemoveProduction = make([][]string, 0)
-				ctx.KeyVariables.AddProduction = make([][]string, 0)
-				ctx.bury("RemoveLeftRecusion", 4)
-				ctx.KeyVariables.CurrentProcessProduction = nil
 				if len(prod) > 1 && prod[1] == B {
+					ctx.KeyVariables.RemoveProduction = make([][]string, 0)
+					ctx.KeyVariables.AddProduction = make([][]string, 0)
 					ctx.KeyVariables.RemoveProduction = append(ctx.KeyVariables.RemoveProduction, prod)
 					for _, bprod := range ctx.Grammer.Productions[B] {
 						newProd := make([]string, 0)
@@ -226,8 +229,8 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 					}
 					ctx.KeyVariables.Productions = utilslice.ReplaceStringArray(ctx.KeyVariables.Productions, prod, ctx.KeyVariables.AddProduction...)
 				}
-				ctx.KeyVariables.RemoveProduction = make([][]string, 0)
-				ctx.KeyVariables.AddProduction = make([][]string, 0)
+				ctx.KeyVariables.RemoveProduction = nil
+				ctx.KeyVariables.AddProduction = nil
 			}
 
 			ctx.KeyVariables.LoopVariableJ++
@@ -250,38 +253,46 @@ func (ctx *LLContext) RemoveLeftRecusion() {
 		}
 
 		newNonterminal := ctx.Grammer.AddNewNonterminal(A)
-		ctx.Grammer.AddNewProduction([]string{newNonterminal})
+		ctx.KeyVariables.AddProduction = make([][]string, 0)
+		ctx.KeyVariables.AddProduction = append(ctx.KeyVariables.AddProduction, []string{newNonterminal})
+		ctx.KeyVariables.ReplaceProduction = make([]ReplaceProduction, 0)
 		for _, prod := range utilslice.CopyStringSlice(ctx.KeyVariables.Productions) {
 			if prod[0] != A {
 				continue
 			}
-			ctx.KeyVariables.CurrentProcessProduction = prod
-			ctx.KeyVariables.RemoveProduction = make([][]string, 0)
-			ctx.KeyVariables.AddProduction = make([][]string, 0)
-			ctx.bury("RemoveLeftRecusion", 8)
 
 			if len(prod) > 1 && prod[1] == A {
 				// 非终结符新的产生式
 				newProd := []string{newNonterminal}
 				newProd = append(newProd, prod[2:]...)
 				newProd = append(newProd, newNonterminal)
-				ctx.KeyVariables.AddProduction = append(ctx.KeyVariables.AddProduction, newProd)
-				ctx.KeyVariables.RemoveProduction = append(ctx.KeyVariables.RemoveProduction, prod)
+				ctx.KeyVariables.ReplaceProduction = append(ctx.KeyVariables.ReplaceProduction, ReplaceProduction{
+					Original: prod,
+					Replace:  newProd,
+				})
 			} else {
 				newProd := append(prod, newNonterminal)
-				ctx.KeyVariables.AddProduction = append(ctx.KeyVariables.AddProduction, newProd)
-				ctx.KeyVariables.RemoveProduction = append(ctx.KeyVariables.RemoveProduction, prod)
+				ctx.KeyVariables.ReplaceProduction = append(ctx.KeyVariables.ReplaceProduction, ReplaceProduction{
+					Original: prod,
+					Replace:  newProd,
+				})
 			}
-
-			ctx.bury("RemoveLeftRecusion", 9)
-			ctx.Grammer.RemoveProduction(ctx.KeyVariables.RemoveProduction[0])
-			ctx.Grammer.AddNewProduction(ctx.KeyVariables.AddProduction[0])
-			ctx.KeyVariables.Productions = utilslice.ReplaceStringArray(ctx.KeyVariables.Productions, ctx.KeyVariables.RemoveProduction[0], ctx.KeyVariables.AddProduction...)
 		}
+		ctx.bury("RemoveLeftRecusion", 9)
+		ctx.Grammer.AddNewProduction([]string{newNonterminal})
+		ctx.insertProductionBeforeNonterminal(A, []string{newNonterminal})
+		for _, rp := range ctx.KeyVariables.ReplaceProduction {
+			ctx.KeyVariables.Productions = utilslice.ReplaceStringArray(ctx.KeyVariables.Productions, rp.Original, rp.Replace)
+			ctx.Grammer.RemoveProduction(rp.Original)
+			ctx.Grammer.AddNewProduction(rp.Replace)
+		}
+		ctx.KeyVariables.AddProduction = nil
+		ctx.KeyVariables.ReplaceProduction = nil
 
 		ctx.KeyVariables.LoopVariableI++
 	}
 
+	ctx.KeyVariables.LoopVariableI = 0
 	ctx.bury("RemoveLeftRecusion", -1)
 }
 
@@ -301,17 +312,23 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 		ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, nonterminal)
 	}
 	sort.Strings(ctx.KeyVariables.NonterminalOrders)
+	// 按照排列好的顺序排列产生式
+	sortProductions := make([]production.Production, 0)
+	for _, nonterminal := range ctx.KeyVariables.NonterminalOrders {
+		sortProductions = append(sortProductions, ctx.Grammer.Productions[nonterminal]...)
+	}
+	ctx.KeyVariables.Productions = sortProductions
 	ctx.bury("ExtractCommonPrefix", 1)
 
 	// 循环
-	ctx.KeyVariables.LoopVariableI = 0
+	ctx.KeyVariables.LoopVariableI = 1
 	for {
 		ctx.bury("ExtractCommonPrefix", 2)
-		if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.NonterminalOrders) {
+		if ctx.KeyVariables.LoopVariableI > len(ctx.KeyVariables.NonterminalOrders) {
 			break
 		}
 
-		nonterminal := ctx.KeyVariables.NonterminalOrders[ctx.KeyVariables.LoopVariableI]
+		nonterminal := ctx.KeyVariables.NonterminalOrders[ctx.KeyVariables.LoopVariableI-1]
 		for {
 			prefixes := set.NewStringSet()
 			commonPrefix := make([]string, 0)
@@ -349,33 +366,44 @@ func (ctx *LLContext) ExtractCommonPrefix() {
 			ctx.KeyVariables.CommonPrefix = commonPrefix
 			ctx.bury("ExtractCommonPrefix", 3)
 
+			ctx.KeyVariables.AddProduction = make([][]string, 0)
+			ctx.KeyVariables.ReplaceProduction = make([]ReplaceProduction, 0)
 			newNonterminal := ctx.Grammer.AddNewNonterminal(nonterminal)
 			newProd := []string{nonterminal}
 			newProd = append(newProd, commonPrefix...)
 			newProd = append(newProd, newNonterminal)
 			ctx.Grammer.AddNewProduction(newProd)
+			ctx.KeyVariables.AddProduction = append(ctx.KeyVariables.AddProduction, newProd)
 			ctx.KeyVariables.NonterminalOrders = append(ctx.KeyVariables.NonterminalOrders, newNonterminal)
 			for _, prod := range processProds {
 				ctx.Grammer.RemoveProduction(prod)
 				newProd := []string{newNonterminal}
 				newProd = append(newProd, prod[len(commonPrefix)+1:]...)
 				ctx.Grammer.AddNewProduction(newProd)
+				ctx.KeyVariables.ReplaceProduction = append(ctx.KeyVariables.ReplaceProduction, ReplaceProduction{
+					Original: prod,
+					Replace:  newProd,
+				})
 			}
 
 			ctx.bury("ExtractCommonPrefix", 4)
+			ctx.KeyVariables.CommonPrefix = nil
+			ctx.insertProductionBeforeNonterminal(nonterminal, newProd)
+			for _, rp := range ctx.KeyVariables.ReplaceProduction {
+				if rp.Replace[0] == newNonterminal {
+					ctx.KeyVariables.Productions = append(utilslice.ReplaceStringArray(ctx.KeyVariables.Productions, rp.Original), rp.Replace)
+				} else {
+					ctx.KeyVariables.Productions = utilslice.ReplaceStringArray(ctx.KeyVariables.Productions, rp.Original, rp.Replace)
+				}
+			}
+			ctx.KeyVariables.AddProduction = nil
+			ctx.KeyVariables.ReplaceProduction = nil
 		}
 
 		ctx.KeyVariables.LoopVariableI++
 	}
 
 	ctx.bury("ExtractCommonPrefix", -1)
-
-	// 更新产生式
-	prods := make([]production.Production, 0)
-	for nonterminal := range ctx.Grammer.Nonterminals {
-		prods = append(prods, ctx.Grammer.Productions[nonterminal]...)
-	}
-	ctx.KeyVariables.Productions = prods
 }
 
 func (ctx *LLContext) ComputeFirstSet() {
@@ -820,4 +848,17 @@ bool Parse(IParser* parser)
     return false;
 }
 `)
+}
+
+func (ctx *LLContext) insertProductionBeforeNonterminal(nonterminal string, prods ...production.Production) {
+	newProd := make([]production.Production, 0)
+	found := false
+	for _, prod := range ctx.KeyVariables.Productions {
+		if !found && prod[0] == nonterminal {
+			newProd = append(newProd, prods...)
+			found = true
+		}
+		newProd = append(newProd, prod)
+	}
+	ctx.KeyVariables.Productions = newProd
 }

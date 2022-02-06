@@ -33,6 +33,9 @@ namespace ipc {
 		QString name;
 		int line;
 	};
+	struct ReplaceProduction {
+		QStringList original, replace;
+	};
 	struct LLBreakpointVariables {
 		QList<QStringList> productions;
 		int loopVariableI, loopVariableJ, loopVariableK;
@@ -41,6 +44,7 @@ namespace ipc {
 		QStringList currentProcessProduction;
 		QList<QStringList> removeProductions;
 		QList<QStringList> addProductions;
+		QList<ReplaceProduction> replaceProduction;
 		QStringList commonPrefix;
 		QHash<QString, QStringList> firstSet, followSet;
 		QList<QStringList> selectSet;

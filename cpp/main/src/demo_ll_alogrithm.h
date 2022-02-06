@@ -36,5 +36,6 @@ private:
 	void setAlogContent(QStringList content);
 	void highlightListItem(int line);
 	void setupPoint(const ipc::Breakpoint &point);
-	void setupPointRemoveLeftRecusicn(int line);
+	void setupPointRemoveLeftRecusion(int line);
+	void setupPointExtractCommonPrefix(int line);
 };

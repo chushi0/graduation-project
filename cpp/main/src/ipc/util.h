@@ -13,4 +13,7 @@ namespace ipc {
 	void parseLLVariables(QJsonObject object, LLBreakpointVariables *out);
 	void parseHashStringStringList(QJsonObject object,
 								   QHash<QString, QStringList> *out);
+	void parseReplaceProduction(QJsonObject object, ReplaceProduction *out);
+	void parseReplaceProductionArray(QJsonArray array,
+									 QList<ReplaceProduction> *out);
 } // namespace ipc
