@@ -221,6 +221,10 @@ void LLVariableWidget::paintProductionList(const PaintContext &ctx,
 				ctx.painter->fillRect(left, y + bounding.top(), width,
 									  bounding.height(), QColor(0xff, 0x99, 0));
 			}
+		} else if (isNonterminalEqual(variable.loopVariableJ - 1, arrProd[0])) {
+			ctx.painter->fillRect(bounding.left(), y + bounding.top(),
+								  bounding.width(), bounding.height(),
+								  QColor(0, 0xff, 0xff, 0x80));
 		}
 		ctx.painter->drawText(0, y, prod);
 		if (isRemoveProduction(arrProd)) {
