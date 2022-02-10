@@ -38,4 +38,5 @@ private:
 	void setupPoint(const ipc::Breakpoint &point);
 	void setupPointRemoveLeftRecusion(int line);
 	void setupPointExtractCommonPrefix(int line);
+	void setupPointComputeFirstSet(int line);
 };

@@ -92,6 +92,8 @@ void DemoLLAlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 		setupPointRemoveLeftRecusion(point.line);
 	} else if (name == "ExtractCommonPrefix") {
 		setupPointExtractCommonPrefix(point.line);
+	} else if (name == "ComputeFirstSet") {
+		setupPointComputeFirstSet(point.line);
 	}
 }
 
@@ -102,14 +104,15 @@ void DemoLLAlogrithmWindow::setupPointRemoveLeftRecusion(int line) {
 			{
 				QStringList list;
 				list << "按照某顺序排列非终结符";
-				list << "循环 i 从 1 到 n";
-				list << "    循环 j 从 1 到 i-1";
+				list << "循环 i 从 1 到 n（非终结符数量）：";
+				list << "    循环 j 从 1 到 i-1：";
 				list << "        将 A[i] -> A[j]r 替换为 A[i] -> Br（A[j] -> "
 						"B）";
 				list << "    消除 A[i] 中的立即左递归";
 				list << "";
 				setAlogContent(list);
 				highlightListItem(0);
+				ui->keyWidget->translateDefault();
 				break;
 			}
 		case 1:
@@ -142,11 +145,12 @@ void DemoLLAlogrithmWindow::setupPointExtractCommonPrefix(int line) {
 			{
 				QStringList list;
 				list << "按照一定顺序排列非终结符";
-				list << "循环 i 从 1 到 n";
+				list << "循环 i 从 1 到 n（非终结符数量）：";
 				list << "    循环提取最短的公共前缀";
 				list << "";
 				setAlogContent(list);
 				highlightListItem(0);
+				ui->keyWidget->translateDefault();
 				break;
 			}
 		case 1:
@@ -159,6 +163,54 @@ void DemoLLAlogrithmWindow::setupPointExtractCommonPrefix(int line) {
 			break;
 		case -1:
 			highlightListItem(3);
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::setupPointComputeFirstSet(int line) {
+	clearListItemBackground();
+	switch (line) {
+		case 0:
+			{
+				QStringList list;
+				list << "按照一定顺序排列产生式";
+				list << "循环 i 从 1 到 n（产生式数量）：";
+				list << "    循环 j 从 1 到 m（当前产生式右部符号数量）：";
+				list << "        如果产生式第 j 个符号是终结符：";
+				list << "            将该终结符加入 First 集，跳出内部循环";
+				list << "        如果产生式第 j 个符号是非终结符：";
+				list << "            将该非终结符的 First 集中空以外的内容加入 "
+						"First 集；如果该非终结符不包含空，跳出内部循环";
+				list << "如果有任何非终结符的First集有更新，则重新执行以上内容";
+				list << "";
+				setAlogContent(list);
+				highlightListItem(0);
+				ui->keyWidget->translateDefault();
+				break;
+			}
+		case 2:
+			highlightListItem(1);
+			break;
+		case 3:
+			highlightListItem(2);
+			break;
+		case 4:
+			highlightListItem(3);
+			break;
+		case 5:
+			highlightListItem(4);
+			break;
+		case 6:
+			highlightListItem(5);
+			break;
+		case 7:
+			highlightListItem(6);
+			break;
+		case 10:
+			highlightListItem(7);
+			break;
+		case -1:
+			highlightListItem(8);
 			break;
 	}
 }

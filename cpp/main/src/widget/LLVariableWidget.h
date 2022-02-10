@@ -13,6 +13,7 @@ public:
 
 	void setVariableAndPoint(const ipc::LLBreakpointVariables &variable,
 							 const ipc::Breakpoint &point);
+	void translateDefault();
 
 protected:
 	virtual void paintEvent(QPaintEvent *) override;
@@ -28,6 +29,9 @@ private:
 	float x, y;
 	float lastMouseX, lastMouseY;
 	bool mousePressed;
+
+	// paintProductionList 安全宽度（右侧可渲染）
+	float productionSafeWidth;
 
 private:
 	struct PaintContext {

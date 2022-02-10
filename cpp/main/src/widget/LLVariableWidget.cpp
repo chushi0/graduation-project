@@ -18,6 +18,13 @@ void LLVariableWidget::setVariableAndPoint(
 	update();
 }
 
+void LLVariableWidget::translateDefault() {
+	x = 0;
+	y = 0;
+
+	update();
+}
+
 void LLVariableWidget::paintEvent(QPaintEvent *event) {
 	QPainter painter(this);
 	if (!variableValid) {
