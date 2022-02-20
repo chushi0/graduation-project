@@ -369,6 +369,8 @@ func (ctx *LLContext) ComputeFirstSet() {
 	}
 
 	ctx.sortNonterminals()
+	ctx.KeyVariables.LoopVariableI = -1
+	ctx.KeyVariables.LoopVariableJ = -1
 	ctx.bury("ComputeFirstSet", 0)
 
 	ctx.KeyVariables.ModifiedFlag = true
@@ -389,15 +391,15 @@ func (ctx *LLContext) ComputeFirstSet() {
 			for {
 				ctx.bury("ComputeFirstSet", 4)
 				if ctx.KeyVariables.LoopVariableJ >= len(prod) {
-					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
-						ctx.KeyVariables.FirstSet[nonterminal].Put("") > 0
+					modify := ctx.KeyVariables.FirstSet[nonterminal].Put("") > 0
+					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag || modify
 					break
 				}
 
 				// 终结符
 				if ctx.Grammer.Terminals.Contains(prod[ctx.KeyVariables.LoopVariableJ]) {
-					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
-						ctx.KeyVariables.FirstSet[nonterminal].Put(prod[ctx.KeyVariables.LoopVariableJ]) > 0
+					modify := ctx.KeyVariables.FirstSet[nonterminal].Put(prod[ctx.KeyVariables.LoopVariableJ]) > 0
+					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag || modify
 					ctx.bury("ComputeFirstSet", 5)
 					break
 				}
@@ -405,8 +407,8 @@ func (ctx *LLContext) ComputeFirstSet() {
 				ctx.bury("ComputeFirstSet", 6)
 				// 非终结符
 				nonterminalFirstSet := ctx.KeyVariables.FirstSet[prod[ctx.KeyVariables.LoopVariableJ]]
-				ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
-					ctx.KeyVariables.FirstSet[nonterminal].UnionExcept(nonterminalFirstSet, "") > 0
+				modify := ctx.KeyVariables.FirstSet[nonterminal].UnionExcept(nonterminalFirstSet, "") > 0
+				ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag || modify
 				ctx.bury("ComputeFirstSet", 7)
 				if !nonterminalFirstSet.Contains("") {
 					break

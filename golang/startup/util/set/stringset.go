@@ -1,6 +1,9 @@
 package set
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"sort"
+)
 
 type StringSet map[string]interface{}
 
@@ -84,5 +87,6 @@ func (s StringSet) MarshalJSON() ([]byte, error) {
 	for v := range s {
 		arr = append(arr, v)
 	}
+	sort.Strings(arr)
 	return json.Marshal(arr)
 }
