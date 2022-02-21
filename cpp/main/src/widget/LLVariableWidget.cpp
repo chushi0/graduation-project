@@ -286,7 +286,7 @@ void LLVariableWidget::paintProductionOrder(const PaintContext &ctx) {
 		if (variable.loopVariableI == i) {
 			ctx.painter->fillRect(bounding.left(), y + bounding.top(),
 								  bounding.width(), bounding.height(),
-								  QColor(0xff, 0x99, 0));
+								  QColor(0xff, 0x99, 0, 0x80));
 			if (variable.loopVariableJ > 0 &&
 				variable.loopVariableJ < arrProd.size()) {
 				auto bounding = computeProductionCellBounding(
