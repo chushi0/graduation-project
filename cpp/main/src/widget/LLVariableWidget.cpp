@@ -3,6 +3,9 @@
 #include <QMouseEvent>
 #include <cmath>
 
+static constexpr auto EMPTY_TERMINAL = "(空)";
+static constexpr auto EOF_TERMINAL = "(结束符)";
+
 LLVariableWidget::LLVariableWidget(QWidget *parent)
 	: QWidget(parent), variableValid(false), x(0), y(0), mousePressed(false) {
 }
@@ -58,6 +61,8 @@ void LLVariableWidget::paintEvent(QPaintEvent *event) {
 		paintComputeFirst(ctx);
 	} else if (point.name == "ComputeFollowSet") {
 		paintComputeFollow(ctx);
+	} else if (point.name == "ComputeSelectSet") {
+		paintComputeSelect(ctx);
 	}
 
 	painter.restore();
@@ -147,6 +152,12 @@ void LLVariableWidget::paintComputeFirst(const PaintContext &ctx) {
 void LLVariableWidget::paintComputeFollow(const PaintContext &ctx) {
 	paintProductionOrder(ctx);
 	paintFollowTable(ctx);
+}
+
+void LLVariableWidget::paintComputeSelect(const PaintContext &ctx) {
+	productionSafeWidth = 0;
+	paintFollowTable(ctx);
+	paintSelectTable(ctx);
 }
 
 void LLVariableWidget::paintNonterminalOrder(const PaintContext &ctx) {
@@ -336,7 +347,7 @@ void LLVariableWidget::paintFirstTable(const PaintContext &ctx) {
 		QString firstText = "";
 		for (auto first : firsts) {
 			if (first == "") {
-				first = "(空)";
+				first = EMPTY_TERMINAL;
 			}
 			firstText += first + "  ";
 		}
@@ -383,7 +394,7 @@ void LLVariableWidget::paintFollowTable(const PaintContext &ctx) {
 		QString firstText = "";
 		for (auto first : firsts) {
 			if (first == "") {
-				first = "(空)";
+				first = EMPTY_TERMINAL;
 			}
 			firstText += first + "  ";
 		}
@@ -403,7 +414,7 @@ void LLVariableWidget::paintFollowTable(const PaintContext &ctx) {
 		QString followText = "";
 		for (auto follow : follows) {
 			if (follow == "$") {
-				follow = "(结束符)";
+				follow = EOF_TERMINAL;
 			}
 			followText += follow + " ";
 		}
@@ -423,6 +434,74 @@ void LLVariableWidget::paintFollowTable(const PaintContext &ctx) {
 	for (int i = 0; i < variable.nonterminalOrders.size() + 2; i++) {
 		ctx.painter->drawLine(left - 8, y + 4, x + w2 + 8, y + 4);
 		ctx.painter->drawLine(left - 8, y + 4, x2 + w3 + 8, y + 4);
+		y += height;
+	}
+	followTableSafeHeight = y;
+}
+
+void LLVariableWidget::paintSelectTable(const PaintContext &ctx) {
+	int height = ctx.normalFontMetrics->height() + 8;
+	int y = followTableSafeHeight + height;
+	auto productionText = "产生式";
+	ctx.painter->drawText(24, y, productionText);
+	int width = ctx.normalFontMetrics->boundingRect(productionText).width();
+	y += height;
+	for (int i = 0; i < variable.productions.size(); i++) {
+		auto arrProd = variable.productions[i];
+		QString prod = arrProd[0] + " :=";
+		for (int i = 1; i < arrProd.size(); i++) {
+			prod += " " + arrProd[i];
+		}
+		auto bounding = ctx.normalFontMetrics->boundingRect(prod);
+		if (variable.loopVariableI == i) {
+			ctx.painter->fillRect(24 + bounding.left(), y + bounding.top(),
+								  bounding.width(), bounding.height(),
+								  QColor(0xff, 0x99, 0, 0x80));
+			if (variable.loopVariableJ > 0 &&
+				variable.loopVariableJ < arrProd.size()) {
+				auto bounding = computeProductionCellBounding(
+					ctx, arrProd, variable.loopVariableJ);
+				ctx.painter->fillRect(24 + bounding.left(), y + bounding.top(),
+									  bounding.width(), bounding.height(),
+									  QColor(0, 0xff, 0xff));
+			}
+		}
+		width = std::max(width, bounding.width());
+		ctx.painter->drawText(24, y, prod);
+		y += height;
+	}
+	int x = width + 16 + 24;
+	y = followTableSafeHeight + height;
+	auto selectText = "Select 集";
+	ctx.painter->drawText(x, y, selectText);
+	int w2 = ctx.normalFontMetrics->boundingRect(selectText).width();
+	for (int i = 0; i < variable.productions.size(); i++) {
+		y += height;
+		auto selects = variable.selectSet[i];
+		QString selectText = "";
+		for (auto select : selects) {
+			if (select == "$") {
+				select = EOF_TERMINAL;
+			}
+			selectText += select + " ";
+		}
+		auto bounding = ctx.normalFontMetrics->boundingRect(selectText);
+		w2 = std::max(w2, bounding.width());
+		ctx.painter->drawText(x, y, selectText);
+	}
+
+	ctx.painter->drawLine(16, followTableSafeHeight + 4, 16,
+						  followTableSafeHeight +
+							  (variable.productions.size() + 1) * height + 4);
+	ctx.painter->drawLine(x - 8, followTableSafeHeight + 4, x - 8,
+						  followTableSafeHeight +
+							  (variable.productions.size() + 1) * height + 4);
+	ctx.painter->drawLine(x + w2 + 8, followTableSafeHeight + 4, x + w2 + 8,
+						  followTableSafeHeight +
+							  (variable.productions.size() + 1) * height + 4);
+	y = followTableSafeHeight;
+	for (int i = 0; i < variable.productions.size() + 2; i++) {
+		ctx.painter->drawLine(16, y + 4, x + w2 + 8, y + 4);
 		y += height;
 	}
 }
@@ -455,5 +534,5 @@ QRect LLVariableWidget::computeProductionCellBounding(const PaintContext &ctx,
 	int height = base.height();
 	int left = prefix.right() - width;
 	int top = prefix.bottom() - height;
-	return QRect(left, top, width, height);
+	return QRect(left, base.top(), width, height);
 }

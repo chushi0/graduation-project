@@ -40,4 +40,5 @@ private:
 	void setupPointExtractCommonPrefix(int line);
 	void setupPointComputeFirstSet(int line);
 	void setupPointComputeFollowSet(int line);
+	void setupPointComputeSelectSet(int line);
 };

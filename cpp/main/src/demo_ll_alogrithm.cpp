@@ -96,6 +96,8 @@ void DemoLLAlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 		setupPointComputeFirstSet(point.line);
 	} else if (name == "ComputeFollowSet") {
 		setupPointComputeFollowSet(point.line);
+	} else if (name == "ComputeSelectSet") {
+		setupPointComputeSelectSet(point.line);
 	}
 }
 
@@ -277,6 +279,50 @@ void DemoLLAlogrithmWindow::setupPointComputeFollowSet(int line) {
 			break;
 		case -1:
 			highlightListItem(10);
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::setupPointComputeSelectSet(int line) {
+	clearListItemBackground();
+	switch (line) {
+		case 0:
+			{
+				QStringList list;
+				list << "按照一定顺序排列产生式";
+				list << "循环 i 从 1 到 n（产生式数量）：";
+				list << "    循环 j 从 1 到 m+1（当前产生式右部符号数量+1）：";
+				list << "        若 j == m+1，则将当前产生式左部符号的 Follow "
+						"集加入当前产生式的Select集，退出内部循环";
+				list << "        将当前符号的 First "
+						"集除空以外的终结符加入当前产生式的 Select 集";
+				list << "        若当前符号的 First 集不包含空，退出内部循环";
+				list << "";
+				setAlogContent(list);
+				highlightListItem(0);
+				ui->keyWidget->translateDefault();
+				break;
+			}
+		case 1:
+			highlightListItem(1);
+			break;
+		case 2:
+			highlightListItem(2);
+			break;
+		case 3:
+			highlightListItem(3);
+			break;
+		case 4:
+			highlightListItem(4);
+			break;
+		case 5:
+			highlightListItem(5);
+			break;
+		case 6:
+		case -1:
+			highlightListItem(6);
 			break;
 		default:
 			break;

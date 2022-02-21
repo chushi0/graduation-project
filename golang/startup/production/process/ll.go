@@ -521,6 +521,9 @@ func (ctx *LLContext) ComputeSelectSet() {
 		ctx.KeyVariables.SelectSet[i] = set.NewStringSet()
 	}
 
+	ctx.KeyVariables.LoopVariableI = -1
+	ctx.KeyVariables.LoopVariableJ = -1
+	ctx.KeyVariables.LoopVariableK = -1
 	ctx.bury("ComputeSelectSet", 0)
 
 	ctx.KeyVariables.LoopVariableI = 0
@@ -534,28 +537,31 @@ func (ctx *LLContext) ComputeSelectSet() {
 		ctx.KeyVariables.LoopVariableJ = 1
 		for {
 			ctx.bury("ComputeSelectSet", 2)
+			ctx.bury("ComputeSelectSet", 3)
 			if ctx.KeyVariables.LoopVariableJ >= len(prod) {
 				ctx.KeyVariables.SelectSet[ctx.KeyVariables.LoopVariableI].UnionExcept(ctx.KeyVariables.FollowSet[prod[0]])
 				break
 			}
 
+			ctx.bury("ComputeSelectSet", 4)
 			cur := prod[ctx.KeyVariables.LoopVariableJ]
 			if ctx.Grammer.Terminals.Contains(cur) {
 				ctx.KeyVariables.SelectSet[ctx.KeyVariables.LoopVariableI].Put(cur)
+				ctx.bury("ComputeSelectSet", 5)
 				break
 			}
 			ctx.KeyVariables.SelectSet[ctx.KeyVariables.LoopVariableI].UnionExcept(
 				ctx.KeyVariables.FirstSet[prod[ctx.KeyVariables.LoopVariableJ]], "",
 			)
+			ctx.bury("ComputeSelectSet", 5)
 			if !ctx.KeyVariables.FirstSet[prod[ctx.KeyVariables.LoopVariableJ]].Contains("") {
 				break
 			}
-
-			ctx.bury("ComputeSelectSet", 3)
+			ctx.bury("ComputeSelectSet", 6)
 			ctx.KeyVariables.LoopVariableJ++
 		}
 
-		ctx.bury("ComputeSelectSet", 4)
+		ctx.KeyVariables.LoopVariableJ = -1
 		ctx.KeyVariables.LoopVariableI++
 	}
 
