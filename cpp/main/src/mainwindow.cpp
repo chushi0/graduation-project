@@ -40,6 +40,8 @@ MainWindow::MainWindow(QWidget *parent)
 			&MainWindow::actionNewFile);
 	connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
 	connect(ui->actionLL, &QAction::triggered, this, &MainWindow::actionAlogLL);
+	connect(ui->actionLL_2, &QAction::triggered, this,
+			&MainWindow::actionAlogLLWithoutTranslate);
 }
 
 MainWindow::~MainWindow() {
@@ -78,7 +80,12 @@ void MainWindow::actionNewFile() {
 }
 
 void MainWindow::actionAlogLL() {
-	auto w = new DemoLLAlogrithmWindow(ui->codeView->text());
+	auto w = new DemoLLAlogrithmWindow(ui->codeView->text(), true);
+	w->show();
+}
+
+void MainWindow::actionAlogLLWithoutTranslate() {
+	auto w = new DemoLLAlogrithmWindow(ui->codeView->text(), false);
 	w->show();
 }
 

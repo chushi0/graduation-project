@@ -51,9 +51,10 @@ void ipc::ProductionParseCancel(QString id) {
 	auto resp = RpcRequest(req);
 }
 
-QString ipc::LLProcessRequest(QString code) {
+QString ipc::LLProcessRequest(QString code, bool withTranslate) {
 	QJsonObject data;
 	data["code"] = code;
+	data["with_translate"] = withTranslate;
 	QJsonObject wrap;
 	wrap["action"] = "ll_process_request";
 	wrap["data"] = data;

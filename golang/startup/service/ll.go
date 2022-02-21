@@ -25,14 +25,15 @@ func init() {
 
 func LLProcessRequest(req json.RawMessage) (code int, resp interface{}, err error) {
 	var reqStruct struct {
-		Code string `json:"code"`
+		Code          string `json:"code"`
+		WithTranslate bool   `json:"with_translate"`
 	}
 	err = json.Unmarshal(req, &reqStruct)
 	if err != nil {
 		return
 	}
 	process := &LLProcess{}
-	entry := ll.CreateLLProcessEntry(reqStruct.Code)
+	entry := ll.CreateLLProcessEntry(reqStruct.Code, reqStruct.WithTranslate)
 	process.DebugContext = debug.StartDebugGoroutine(entry)
 	id := uuid.New()
 	llProcess[id] = process

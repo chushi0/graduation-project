@@ -16,10 +16,11 @@ import (
 
 // LL 处理
 type LLContext struct {
-	Context      *debug.DebugContext
-	Grammer      *Grammer
-	Code         string
-	KeyVariables *LLKeyVariables
+	Context       *debug.DebugContext
+	Grammer       *Grammer
+	Code          string
+	WithTranslate bool
+	KeyVariables  *LLKeyVariables
 }
 
 type LLKeyVariables struct {
@@ -59,10 +60,11 @@ const (
 	LL_Error_SelectConflict = 2
 )
 
-func CreateLLProcessEntry(code string) func(*debug.DebugContext) {
+func CreateLLProcessEntry(code string, withTranslate bool) func(*debug.DebugContext) {
 	ctx := &LLContext{
-		Code:         code,
-		KeyVariables: &LLKeyVariables{},
+		Code:          code,
+		WithTranslate: withTranslate,
+		KeyVariables:  &LLKeyVariables{},
 	}
 	return func(dc *debug.DebugContext) {
 		ctx.Context = dc
@@ -103,10 +105,12 @@ func (ctx *LLContext) Prepare() {
 }
 
 func (ctx *LLContext) Translate() {
-	// 去除左递归
-	ctx.RemoveLeftRecusion()
-	// 提取公共前缀
-	ctx.ExtractCommonPrefix()
+	if ctx.WithTranslate {
+		// 去除左递归
+		ctx.RemoveLeftRecusion()
+		// 提取公共前缀
+		ctx.ExtractCommonPrefix()
+	}
 }
 
 func (ctx *LLContext) Calculate() {

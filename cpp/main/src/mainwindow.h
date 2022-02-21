@@ -19,6 +19,7 @@ private slots:
 	void codeChange();
 	void actionNewFile();
 	void actionAlogLL();
+	void actionAlogLLWithoutTranslate();
 	void receiveProduction();
 
 private:

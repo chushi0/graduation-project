@@ -122,6 +122,7 @@
      <string>演示</string>
     </property>
     <addaction name="actionLL"/>
+    <addaction name="actionLL_2"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menubianji"/>
@@ -262,6 +263,11 @@
   <action name="actionLL">
    <property name="text">
     <string>LL</string>
+   </property>
+  </action>
+  <action name="actionLL_2">
+   <property name="text">
+    <string>LL（跳过文法转换）</string>
    </property>
   </action>
  </widget>

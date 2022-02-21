@@ -9,7 +9,7 @@ class DemoLLAlogrithmWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	DemoLLAlogrithmWindow(QString code);
+	DemoLLAlogrithmWindow(QString code, bool withTranslate);
 	~DemoLLAlogrithmWindow();
 
 protected:

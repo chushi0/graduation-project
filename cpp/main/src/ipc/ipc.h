@@ -10,10 +10,11 @@ namespace ipc {
 	bool ProductionParseQuery(QString id, ProductionResult *result);
 	void ProductionParseCancel(QString id);
 
-	QString LLProcessRequest(QString code);
+	QString LLProcessRequest(QString code, bool withTranslate);
 	void LLProcessSwitchMode(QString id, int mode);
 	void LLProcessRelease(QString id);
 	void LLProcessSetBreakpoints(QString id, QList<Breakpoint> breakpoints);
-	bool LLProcessGetVariables(QString id, LLBreakpointVariables *variables, Breakpoint* point);
+	bool LLProcessGetVariables(QString id, LLBreakpointVariables *variables,
+							   Breakpoint *point);
 	bool LLProcessExit(QString id);
 } // namespace ipc

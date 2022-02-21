@@ -5,10 +5,10 @@
 #include <QListWidgetItem>
 #include <QScrollBar>
 
-DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code)
+DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code, bool withTranslate)
 	: QMainWindow(), ui(new Ui::DemoLLWindow) {
 	ui->setupUi(this);
-	processId = ipc::LLProcessRequest(code);
+	processId = ipc::LLProcessRequest(code, withTranslate);
 	setProcessBreakpoint();
 	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModeRun);
 	status = Run;
