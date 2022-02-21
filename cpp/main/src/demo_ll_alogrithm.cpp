@@ -94,6 +94,8 @@ void DemoLLAlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 		setupPointExtractCommonPrefix(point.line);
 	} else if (name == "ComputeFirstSet") {
 		setupPointComputeFirstSet(point.line);
+	} else if (name == "ComputeFollowSet") {
+		setupPointComputeFollowSet(point.line);
 	}
 }
 
@@ -180,7 +182,8 @@ void DemoLLAlogrithmWindow::setupPointComputeFirstSet(int line) {
 				list << "            将该终结符加入 First 集，跳出内部循环";
 				list << "        如果产生式第 j 个符号是非终结符：";
 				list << "            将该非终结符的 First 集中空以外的内容加入 "
-						"First 集；如果该非终结符不包含空，跳出内部循环";
+						"First 集；如果该非终结符的 First "
+						"集不包含空，跳出内部循环";
 				list << "如果有任何非终结符的First集有更新，则重新执行以上内容";
 				list << "";
 				setAlogContent(list);
@@ -211,6 +214,71 @@ void DemoLLAlogrithmWindow::setupPointComputeFirstSet(int line) {
 			break;
 		case -1:
 			highlightListItem(8);
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::setupPointComputeFollowSet(int line) {
+	clearListItemBackground();
+	switch (line) {
+		case 0:
+			{
+				QStringList list;
+				list << "按照一定顺序排列产生式";
+				list << "将结束符加入开始符号的Follow集";
+				list << "循环 i 从 1 到 n（产生式数量）：";
+				list << "    循环 j 从 1 到 m（当前产生式右部符号数量）：";
+				list << "        如果产生式第 j "
+						"个符号是终结符，进入下一次循环（continue）";
+				list << "        循环 k 从 j+1 到 m+1：";
+				list << "           如果 k == m+1，则将产生式左部符号的 Follow "
+						"集加入第j个符号的 Follow 集，跳出循环";
+				list << "           将产生式第 k "
+						"个符号的 First 集中空以外的符号加入第 j "
+						"个符号的 Follow 集";
+				list << "           如果第 k 个符号的 First "
+						"集中不包含空，则退出内部循环";
+				list
+					<< "如果有任何非终结符的Follow集有更新，则重新执行以上内容";
+				list << "";
+				setAlogContent(list);
+				highlightListItem(0);
+				ui->keyWidget->translateDefault();
+				break;
+			}
+		case 1:
+			highlightListItem(1);
+			break;
+		case 2:
+		case 4:
+			highlightListItem(2);
+			break;
+		case 5:
+			highlightListItem(3);
+			break;
+		case 8:
+			highlightListItem(4);
+			break;
+		case 6:
+			highlightListItem(5);
+			break;
+		case 7:
+			highlightListItem(6);
+			break;
+		case 9:
+			highlightListItem(7);
+			break;
+		case 10:
+			highlightListItem(8);
+			break;
+		case 11:
+		case 12:
+			highlightListItem(9);
+			break;
+		case -1:
+			highlightListItem(10);
+			break;
+		default:
 			break;
 	}
 }

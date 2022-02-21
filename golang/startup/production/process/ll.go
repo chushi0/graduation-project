@@ -431,32 +431,32 @@ func (ctx *LLContext) ComputeFollowSet() {
 		ctx.KeyVariables.FollowSet[i] = set.NewStringSet()
 	}
 
+	ctx.KeyVariables.LoopVariableI = -1
+	ctx.KeyVariables.LoopVariableJ = -1
+	ctx.KeyVariables.LoopVariableK = -1
+
 	ctx.bury("ComputeFollowSet", 0)
 
 	// 按照一定顺序排列非终结符
 	ctx.sortNonterminals()
 	ctx.bury("ComputeFollowSet", 1)
 
+	// 开始符号加入结束符
+	ctx.KeyVariables.FollowSet[ctx.Grammer.StartNonterminal].Put("$")
+	ctx.bury("ComputeFollowSet", 2)
+
 	ctx.KeyVariables.ModifiedFlag = true
 	for ctx.KeyVariables.ModifiedFlag {
 		ctx.KeyVariables.ModifiedFlag = false
-		ctx.bury("ComputeFollowSet", 2)
 
 		ctx.KeyVariables.LoopVariableI = 0
 		for {
-			ctx.bury("ComputeFollowSet", 3)
+			ctx.bury("ComputeFollowSet", 4)
 			if ctx.KeyVariables.LoopVariableI >= len(ctx.KeyVariables.Productions) {
 				break
 			}
 			prod := ctx.KeyVariables.Productions[ctx.KeyVariables.LoopVariableI]
 			nonterminal := prod[0]
-
-			// 开始符号：加入 $ 结束符
-			if nonterminal == ctx.Grammer.StartNonterminal {
-				ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
-					ctx.KeyVariables.FollowSet[nonterminal].Put("$") > 0
-				ctx.bury("ComputeFollowSet", 4)
-			}
 
 			// 顺序遍历
 			ctx.KeyVariables.LoopVariableJ = 1
@@ -466,6 +466,7 @@ func (ctx *LLContext) ComputeFollowSet() {
 					break
 				}
 
+				ctx.bury("ComputeFollowSet", 8)
 				current := prod[ctx.KeyVariables.LoopVariableJ]
 				if !ctx.Grammer.Nonterminals.Contains(current) {
 					ctx.KeyVariables.LoopVariableJ++
@@ -474,39 +475,43 @@ func (ctx *LLContext) ComputeFollowSet() {
 				ctx.KeyVariables.LoopVariableK = ctx.KeyVariables.LoopVariableJ + 1
 				for {
 					ctx.bury("ComputeFollowSet", 6)
+					ctx.bury("ComputeFollowSet", 7)
 					if ctx.KeyVariables.LoopVariableK >= len(prod) {
-						ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
-							ctx.KeyVariables.FollowSet[current].UnionExcept(
-								ctx.KeyVariables.FollowSet[nonterminal],
-							) > 0
+						modify := ctx.KeyVariables.FollowSet[current].UnionExcept(
+							ctx.KeyVariables.FollowSet[nonterminal],
+						) > 0
+						ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag || modify
 						break
 					}
+					ctx.bury("ComputeFollowSet", 9)
 					cur := prod[ctx.KeyVariables.LoopVariableK]
 					if ctx.Grammer.Terminals.Contains(cur) {
-						ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
-							ctx.KeyVariables.FollowSet[current].Put(cur) > 0
+						modify := ctx.KeyVariables.FollowSet[current].Put(cur) > 0
+						ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag || modify
 						break
 					}
 
-					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag ||
-						ctx.KeyVariables.FollowSet[current].UnionExcept(
-							ctx.KeyVariables.FirstSet[cur], "",
-						) > 0
+					modify := ctx.KeyVariables.FollowSet[current].UnionExcept(
+						ctx.KeyVariables.FirstSet[cur], "",
+					) > 0
+					ctx.KeyVariables.ModifiedFlag = ctx.KeyVariables.ModifiedFlag || modify
+					ctx.bury("ComputeFollowSet", 10)
 					if !ctx.KeyVariables.FirstSet[cur].Contains("") {
 						break
 					}
 
-					ctx.bury("ComputeFollowSet", 7)
+					ctx.bury("ComputeFollowSet", 11)
 					ctx.KeyVariables.LoopVariableK++
 				}
-
-				ctx.bury("ComputeFollowSet", 8)
+				ctx.KeyVariables.LoopVariableK = -1
 				ctx.KeyVariables.LoopVariableJ++
 			}
+			ctx.KeyVariables.LoopVariableJ = -1
 			ctx.KeyVariables.LoopVariableI++
 		}
-
+		ctx.bury("ComputeFollowSet", 12)
 	}
+	ctx.bury("ComputeFollowSet", -1)
 }
 
 func (ctx *LLContext) ComputeSelectSet() {

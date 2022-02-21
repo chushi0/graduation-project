@@ -49,11 +49,13 @@ private:
 	void paintRemoveLeftRecusion(const PaintContext &ctx);
 	void paintExtractCommonPrefix(const PaintContext &ctx);
 	void paintComputeFirst(const PaintContext &ctx);
+	void paintComputeFollow(const PaintContext &ctx);
 
 	void paintNonterminalOrder(const PaintContext &ctx);
 	void paintProductionList(const PaintContext &ctx, bool autoDisableColor);
 	void paintProductionOrder(const PaintContext &ctx);
 	void paintFirstTable(const PaintContext &ctx);
+	void paintFollowTable(const PaintContext &ctx);
 
 	QRect computeProductionCellBounding(const PaintContext &ctx,
 										QStringList production, int index);

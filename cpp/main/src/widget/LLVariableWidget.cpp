@@ -56,6 +56,8 @@ void LLVariableWidget::paintEvent(QPaintEvent *event) {
 		paintExtractCommonPrefix(ctx);
 	} else if (point.name == "ComputeFirstSet") {
 		paintComputeFirst(ctx);
+	} else if (point.name == "ComputeFollowSet") {
+		paintComputeFollow(ctx);
 	}
 
 	painter.restore();
@@ -140,6 +142,11 @@ void LLVariableWidget::paintExtractCommonPrefix(const PaintContext &ctx) {
 void LLVariableWidget::paintComputeFirst(const PaintContext &ctx) {
 	paintProductionOrder(ctx);
 	paintFirstTable(ctx);
+}
+
+void LLVariableWidget::paintComputeFollow(const PaintContext &ctx) {
+	paintProductionOrder(ctx);
+	paintFollowTable(ctx);
 }
 
 void LLVariableWidget::paintNonterminalOrder(const PaintContext &ctx) {
@@ -288,6 +295,14 @@ void LLVariableWidget::paintProductionOrder(const PaintContext &ctx) {
 									  bounding.width(), bounding.height(),
 									  QColor(0, 0xff, 0xff));
 			}
+			if (variable.loopVariableK > 0 &&
+				variable.loopVariableK < arrProd.size()) {
+				auto bounding = computeProductionCellBounding(
+					ctx, arrProd, variable.loopVariableK);
+				ctx.painter->fillRect(bounding.left(), y + bounding.top(),
+									  bounding.width(), bounding.height(),
+									  QColor(0x99, 0xff, 0));
+			}
 		}
 		productionSafeWidth = std::max(productionSafeWidth, bounding.width());
 		ctx.painter->drawText(0, y, prod);
@@ -338,6 +353,76 @@ void LLVariableWidget::paintFirstTable(const PaintContext &ctx) {
 	y = 0;
 	for (int i = 0; i < variable.nonterminalOrders.size() + 2; i++) {
 		ctx.painter->drawLine(left - 8, y + 4, x + w2 + 8, y + 4);
+		y += height;
+	}
+}
+
+void LLVariableWidget::paintFollowTable(const PaintContext &ctx) {
+	int left = productionSafeWidth + 16 + 8;
+	int height = ctx.normalFontMetrics->height() + 8;
+	int width = 0;
+	int y = height;
+	auto nonterminalsText = "非终结符";
+	ctx.painter->drawText(left, y, nonterminalsText);
+	width = ctx.normalFontMetrics->boundingRect(nonterminalsText).width();
+	for (auto nonterminal : variable.nonterminalOrders) {
+		y += height;
+		auto bounding = ctx.normalFontMetrics->boundingRect(nonterminal);
+		width = std::max(width, bounding.width());
+		ctx.painter->drawText(left, y, nonterminal);
+	}
+	int x = left + width + 16;
+	y = height;
+	int w2 = 0;
+	auto firstSetText = "First 集";
+	ctx.painter->drawText(x, y, firstSetText);
+	w2 = ctx.normalFontMetrics->boundingRect(firstSetText).width();
+	for (auto nonterminal : variable.nonterminalOrders) {
+		y += height;
+		auto firsts = variable.firstSet[nonterminal];
+		QString firstText = "";
+		for (auto first : firsts) {
+			if (first == "") {
+				first = "(空)";
+			}
+			firstText += first + "  ";
+		}
+		auto bounding = ctx.normalFontMetrics->boundingRect(firstText);
+		w2 = std::max(w2, bounding.width());
+		ctx.painter->drawText(x, y, firstText);
+	}
+	int x2 = x + w2 + 16;
+	y = height;
+	int w3 = 0;
+	auto followSetText = "Follow 集";
+	ctx.painter->drawText(x2, y, followSetText);
+	w3 = ctx.normalFontMetrics->boundingRect(followSetText).width();
+	for (auto nonterminal : variable.nonterminalOrders) {
+		y += height;
+		auto follows = variable.followSet[nonterminal];
+		QString followText = "";
+		for (auto follow : follows) {
+			if (follow == "$") {
+				follow = "(结束符)";
+			}
+			followText += follow + " ";
+		}
+		auto bounding = ctx.normalFontMetrics->boundingRect(followText);
+		w3 = std::max(w3, bounding.width());
+		ctx.painter->drawText(x2, y, followText);
+	}
+	ctx.painter->drawLine(left - 8, 4, left - 8,
+						  (variable.nonterminalOrders.size() + 1) * height + 4);
+	ctx.painter->drawLine(x - 8, 4, x - 8,
+						  (variable.nonterminalOrders.size() + 1) * height + 4);
+	ctx.painter->drawLine(x2 - 8, 4, x2 - 8,
+						  (variable.nonterminalOrders.size() + 1) * height + 4);
+	ctx.painter->drawLine(x2 + w3 + 8, 4, x2 + w3 + 8,
+						  (variable.nonterminalOrders.size() + 1) * height + 4);
+	y = 0;
+	for (int i = 0; i < variable.nonterminalOrders.size() + 2; i++) {
+		ctx.painter->drawLine(left - 8, y + 4, x + w2 + 8, y + 4);
+		ctx.painter->drawLine(left - 8, y + 4, x2 + w3 + 8, y + 4);
 		y += height;
 	}
 }
