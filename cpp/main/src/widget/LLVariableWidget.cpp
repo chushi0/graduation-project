@@ -3,8 +3,8 @@
 #include <QMouseEvent>
 #include <cmath>
 
-static constexpr auto EMPTY_TERMINAL = "(空)";
-static constexpr auto EOF_TERMINAL = "(结束符)";
+static constexpr auto EMPTY_TERMINAL = "ε";
+static constexpr auto EOF_TERMINAL = "$";
 
 LLVariableWidget::LLVariableWidget(QWidget *parent)
 	: QWidget(parent), variableValid(false), x(0), y(0), mousePressed(false) {
