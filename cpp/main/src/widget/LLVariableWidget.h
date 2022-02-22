@@ -34,6 +34,8 @@ private:
 	int productionSafeWidth;
 	// paintFollowTable 安全高度（底部可渲染）
 	int followTableSafeHeight;
+	// paintSelectTable 安全宽度（右侧可渲染）
+	int selectTableSafeWidth;
 
 private:
 	struct PaintContext {
@@ -53,6 +55,7 @@ private:
 	void paintComputeFirst(const PaintContext &ctx);
 	void paintComputeFollow(const PaintContext &ctx);
 	void paintComputeSelect(const PaintContext &ctx);
+	void paintGenerateAutomaton(const PaintContext &ctx);
 
 	void paintNonterminalOrder(const PaintContext &ctx);
 	void paintProductionList(const PaintContext &ctx, bool autoDisableColor);
@@ -60,7 +63,10 @@ private:
 	void paintFirstTable(const PaintContext &ctx);
 	void paintFollowTable(const PaintContext &ctx);
 	void paintSelectTable(const PaintContext &ctx);
+	void paintAutomaton(const PaintContext &ctx);
 
 	QRect computeProductionCellBounding(const PaintContext &ctx,
 										QStringList production, int index);
+	int paintTableColumn(const PaintContext &ctx, int x, int y,
+						 QStringList content);
 };

@@ -37,6 +37,7 @@ namespace ipc {
 		QStringList original, replace;
 	};
 	struct LLBreakpointVariables {
+		QStringList terminals;
 		QList<QStringList> productions;
 		int loopVariableI, loopVariableJ, loopVariableK;
 		bool modifiedFlag;
@@ -48,5 +49,6 @@ namespace ipc {
 		QStringList commonPrefix;
 		QHash<QString, QStringList> firstSet, followSet;
 		QList<QStringList> selectSet;
+		QHash<QString, QHash<QString, int>> automation;
 	};
 } // namespace ipc

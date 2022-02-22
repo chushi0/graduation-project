@@ -41,4 +41,5 @@ private:
 	void setupPointComputeFirstSet(int line);
 	void setupPointComputeFollowSet(int line);
 	void setupPointComputeSelectSet(int line);
+	void setupPointGenerateAutomaton(int line);
 };

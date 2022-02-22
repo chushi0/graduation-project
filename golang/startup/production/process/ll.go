@@ -29,6 +29,7 @@ type LLKeyVariables struct {
 	LoopVariableJ int                     `json:"loop_variable_j"`
 	LoopVariableK int                     `json:"loop_variable_k"`
 	ModifiedFlag  bool                    `json:"modified_flag"`
+	Terminals     []string                `json:"terminals"`
 
 	NonterminalOrders        []string                `json:"nonterminal_orders"`
 	CurrentProcessProduction production.Production   `json:"current_process_production"`
@@ -41,6 +42,8 @@ type LLKeyVariables struct {
 	FirstSet  map[string]set.StringSet `json:"first"`
 	FollowSet map[string]set.StringSet `json:"follow"`
 	SelectSet []set.StringSet          `json:"select"`
+
+	Automaton map[string]map[string]int `json:"automaton"`
 }
 
 type LLResult struct {
@@ -143,6 +146,10 @@ func (ctx *LLContext) ParseCode() {
 	}
 	ctx.KeyVariables.Productions = prods
 	ctx.Grammer = NewGrammer(prods)
+	ctx.KeyVariables.Terminals = make([]string, 0, len(ctx.Grammer.Terminals))
+	for terminal := range ctx.Grammer.Terminals {
+		ctx.KeyVariables.Terminals = append(ctx.KeyVariables.Terminals, terminal)
+	}
 }
 
 /**
@@ -589,6 +596,24 @@ func (ctx *LLContext) CheckSelectConflict() {
 }
 
 func (ctx *LLContext) GenerateAutomaton() {
+	ctx.KeyVariables.Automaton = make(map[string]map[string]int)
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		ctx.KeyVariables.Automaton[nonterminal] = make(map[string]int)
+		ctx.KeyVariables.Automaton[nonterminal]["$"] = -1
+		for terminal := range ctx.Grammer.Terminals {
+			ctx.KeyVariables.Automaton[nonterminal][terminal] = -1
+		}
+	}
+	ctx.bury("GenerateAutomaton", 0)
+
+	for i, prod := range ctx.KeyVariables.Productions {
+		selectSet := ctx.KeyVariables.SelectSet[i]
+		nonterminal := prod[0]
+		for terminal := range selectSet {
+			ctx.KeyVariables.Automaton[nonterminal][terminal] = i
+		}
+	}
+	ctx.bury("GenerateAutomaton", -1)
 }
 
 func (ctx *LLContext) GenerateYaccCode() {

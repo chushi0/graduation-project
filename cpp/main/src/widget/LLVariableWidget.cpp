@@ -63,6 +63,8 @@ void LLVariableWidget::paintEvent(QPaintEvent *event) {
 		paintComputeFollow(ctx);
 	} else if (point.name == "ComputeSelectSet") {
 		paintComputeSelect(ctx);
+	} else if (point.name == "GenerateAutomaton") {
+		paintGenerateAutomaton(ctx);
 	}
 
 	painter.restore();
@@ -158,6 +160,12 @@ void LLVariableWidget::paintComputeSelect(const PaintContext &ctx) {
 	productionSafeWidth = 0;
 	paintFollowTable(ctx);
 	paintSelectTable(ctx);
+}
+
+void LLVariableWidget::paintGenerateAutomaton(const PaintContext &ctx) {
+	followTableSafeHeight = 0;
+	paintSelectTable(ctx);
+	paintAutomaton(ctx);
 }
 
 void LLVariableWidget::paintNonterminalOrder(const PaintContext &ctx) {
@@ -504,6 +512,42 @@ void LLVariableWidget::paintSelectTable(const PaintContext &ctx) {
 		ctx.painter->drawLine(16, y + 4, x + w2 + 8, y + 4);
 		y += height;
 	}
+	selectTableSafeWidth = x + w2 + 8;
+}
+
+void LLVariableWidget::paintAutomaton(const PaintContext &ctx) {
+	int left = selectTableSafeWidth + 24;
+
+	// 绘制第一列：非终结符
+	QStringList list;
+	list << "";
+	for (auto nonterminal : variable.nonterminalOrders) {
+		list << nonterminal;
+	}
+	left += paintTableColumn(ctx, left, 0, list);
+
+	// 绘制终结符和选择的产生式
+	QStringList terminals = variable.terminals;
+	terminals << "$";
+	terminals.sort();
+	for (auto terminal : terminals) {
+		QStringList list;
+		list << terminal;
+		for (auto nonterminal : variable.nonterminalOrders) {
+			int prodIndex = variable.automation[nonterminal][terminal];
+			if (prodIndex < 0) {
+				list << "";
+			} else {
+				auto arrProd = variable.productions[prodIndex];
+				QString prod = arrProd[0] + " :=";
+				for (int i = 1; i < arrProd.size(); i++) {
+					prod += " " + arrProd[i];
+				}
+				list << prod;
+			}
+		}
+		left += paintTableColumn(ctx, left, 0, list);
+	}
 }
 
 bool LLVariableWidget::isProdPrefixEqual(QStringList prod) {
@@ -535,4 +579,24 @@ QRect LLVariableWidget::computeProductionCellBounding(const PaintContext &ctx,
 	int left = prefix.right() - width;
 	int top = prefix.bottom() - height;
 	return QRect(left, base.top(), width, height);
+}
+
+int LLVariableWidget::paintTableColumn(const PaintContext &ctx, int x, int y,
+									   QStringList content) {
+	int height = ctx.normalFontMetrics->height() + 8;
+	int curY = y;
+	int width = 0;
+	for (auto row : content) {
+		curY += height;
+		width =
+			std::max(width, ctx.normalFontMetrics->boundingRect(row).width());
+		ctx.painter->drawText(x, curY, row);
+	}
+	ctx.painter->drawLine(x - 8, y + 4, x - 8, curY + 4);
+	ctx.painter->drawLine(x + width + 8, y + 4, x + width + 8, curY + 4);
+	for (int i = 0; i < content.size() + 1; i++) {
+		ctx.painter->drawLine(x - 8, y + 4, x + width + 8, y + 4);
+		y += height;
+	}
+	return width + 16;
 }

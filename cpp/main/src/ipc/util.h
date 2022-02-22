@@ -16,4 +16,7 @@ namespace ipc {
 	void parseReplaceProduction(QJsonObject object, ReplaceProduction *out);
 	void parseReplaceProductionArray(QJsonArray array,
 									 QList<ReplaceProduction> *out);
+	void parseHashStringInt(QJsonObject, QHash<QString, int> *out);
+	void parseHashStringHashStringInt(QJsonObject object,
+									  QHash<QString, QHash<QString, int>> *out);
 } // namespace ipc

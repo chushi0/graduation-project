@@ -35,6 +35,7 @@ void ipc::parseErrors(QJsonArray array, QList<ipc::ErrorType> *list) {
 }
 
 void ipc::parseLLVariables(QJsonObject object, LLBreakpointVariables *out) {
+	parseJsonArrayToStringList(object["terminals"].toArray(), &out->terminals);
 	parseStringListList(object["productions"].toArray(), &out->productions);
 	out->loopVariableI = object["loop_variable_i"].toInt();
 	out->loopVariableJ = object["loop_variable_j"].toInt();
@@ -55,6 +56,8 @@ void ipc::parseLLVariables(QJsonObject object, LLBreakpointVariables *out) {
 	parseHashStringStringList(object["first"].toObject(), &out->firstSet);
 	parseHashStringStringList(object["follow"].toObject(), &out->followSet);
 	parseStringListList(object["select"].toArray(), &out->selectSet);
+	parseHashStringHashStringInt(object["automaton"].toObject(),
+								 &out->automation);
 }
 
 void ipc::parseHashStringStringList(QJsonObject object,
@@ -76,5 +79,17 @@ void ipc::parseReplaceProductionArray(QJsonArray array,
 		ReplaceProduction rp;
 		parseReplaceProduction(o, &rp);
 		out->append(rp);
+	}
+}
+
+void ipc::parseHashStringInt(QJsonObject object, QHash<QString, int> *out) {
+	for (auto &k : object.keys()) {
+		(*out)[k] = object[k].toInt();
+	}
+}
+void ipc::parseHashStringHashStringInt(
+	QJsonObject object, QHash<QString, QHash<QString, int>> *out) {
+	for (auto &k : object.keys()) {
+		ipc::parseHashStringInt(object[k].toObject(), &(*out)[k]);
 	}
 }

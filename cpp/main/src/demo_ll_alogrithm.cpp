@@ -39,8 +39,8 @@ void DemoLLAlogrithmWindow::closeEvent(QCloseEvent *event) {
 void DemoLLAlogrithmWindow::setProcessBreakpoint() {
 	QList<ipc::Breakpoint> breakpoints;
 	const char *names[] = {"RemoveLeftRecusion", "ExtractCommonPrefix",
-						   "ComputeFirstSet", "ComputeFollowSet",
-						   "ComputeSelectSet"};
+						   "ComputeFirstSet",	 "ComputeFollowSet",
+						   "ComputeSelectSet",	 "GenerateAutomaton"};
 	for (auto name : names) {
 		breakpoints << ipc::Breakpoint{name, 0};
 		// breakpoints << ipc::Breakpoint{name, -1};
@@ -98,6 +98,8 @@ void DemoLLAlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 		setupPointComputeFollowSet(point.line);
 	} else if (name == "ComputeSelectSet") {
 		setupPointComputeSelectSet(point.line);
+	} else if (name == "GenerateAutomaton") {
+		setupPointGenerateAutomaton(point.line);
 	}
 }
 
@@ -323,6 +325,27 @@ void DemoLLAlogrithmWindow::setupPointComputeSelectSet(int line) {
 		case 6:
 		case -1:
 			highlightListItem(6);
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::setupPointGenerateAutomaton(int line) {
+	clearListItemBackground();
+	switch (line) {
+		case 0:
+			{
+				QStringList list;
+				list << "根据 Select 集绘制表格";
+				list << "";
+				setAlogContent(list);
+				highlightListItem(0);
+				ui->keyWidget->translateDefault();
+				break;
+			}
+		case -1:
+			highlightListItem(1);
 			break;
 		default:
 			break;
