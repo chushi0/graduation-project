@@ -68,5 +68,5 @@ private:
 	QRect computeProductionCellBounding(const PaintContext &ctx,
 										QStringList production, int index);
 	int paintTableColumn(const PaintContext &ctx, int x, int y,
-						 QStringList content);
+						 QStringList content, QString warnText = "");
 };

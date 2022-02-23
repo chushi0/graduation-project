@@ -535,8 +535,10 @@ void LLVariableWidget::paintAutomaton(const PaintContext &ctx) {
 		list << terminal;
 		for (auto nonterminal : variable.nonterminalOrders) {
 			int prodIndex = variable.automation[nonterminal][terminal];
-			if (prodIndex < 0) {
+			if (prodIndex == -1) {
 				list << "";
+			} else if (prodIndex == -2) {
+				list << "冲突";
 			} else {
 				auto arrProd = variable.productions[prodIndex];
 				QString prod = arrProd[0] + " :=";
@@ -546,7 +548,7 @@ void LLVariableWidget::paintAutomaton(const PaintContext &ctx) {
 				list << prod;
 			}
 		}
-		left += paintTableColumn(ctx, left, 0, list);
+		left += paintTableColumn(ctx, left, 0, list, "冲突");
 	}
 }
 
@@ -582,7 +584,7 @@ QRect LLVariableWidget::computeProductionCellBounding(const PaintContext &ctx,
 }
 
 int LLVariableWidget::paintTableColumn(const PaintContext &ctx, int x, int y,
-									   QStringList content) {
+									   QStringList content, QString warnText) {
 	int height = ctx.normalFontMetrics->height() + 8;
 	int curY = y;
 	int width = 0;
@@ -590,7 +592,11 @@ int LLVariableWidget::paintTableColumn(const PaintContext &ctx, int x, int y,
 		curY += height;
 		width =
 			std::max(width, ctx.normalFontMetrics->boundingRect(row).width());
+		if (row == warnText) {
+			ctx.painter->setPen(QColor(0xff, 0, 0));
+		}
 		ctx.painter->drawText(x, curY, row);
+		ctx.painter->setPen(QColor(0, 0, 0));
 	}
 	ctx.painter->drawLine(x - 8, y + 4, x - 8, curY + 4);
 	ctx.painter->drawLine(x + width + 8, y + 4, x + width + 8, curY + 4);

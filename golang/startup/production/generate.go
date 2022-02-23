@@ -123,6 +123,18 @@ func ParseProduction(code string, interruptFlag *bool) ([]Production, *ErrorCont
 		}
 		result = append(result, lastProduction)
 	}
+	found := false
+	for _, prod := range result {
+		if prod[0] == "S" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		lexer.ErrorContainer.Warnings = append(lexer.ErrorContainer.Warnings, &Error{
+			Type: ErrorType_NoStartSymbol,
+		})
+	}
 	return result, lexer.ErrorContainer
 }
 

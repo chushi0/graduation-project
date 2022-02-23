@@ -118,4 +118,7 @@ const (
 	ErrorType_MissingProduct ErrorType = 20004
 	// 语法分析：过多的生成标记
 	ErrorType_TooManyProduct ErrorType = 20005
+
+	// 语义分析：缺少开始符号
+	ErrorType_NoStartSymbol ErrorType = 30001
 )

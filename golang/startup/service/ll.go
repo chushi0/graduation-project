@@ -10,6 +10,7 @@ import (
 
 type LLProcess struct {
 	DebugContext *debug.DebugContext
+	LLContext    *ll.LLContext
 }
 
 var llProcess map[string]*LLProcess = make(map[string]*LLProcess)
@@ -33,7 +34,10 @@ func LLProcessRequest(req json.RawMessage) (code int, resp interface{}, err erro
 		return
 	}
 	process := &LLProcess{}
-	entry := ll.CreateLLProcessEntry(reqStruct.Code, reqStruct.WithTranslate)
+	process.LLContext = ll.NewLLContext()
+	process.LLContext.Code = reqStruct.Code
+	process.LLContext.WithTranslate = reqStruct.WithTranslate
+	entry := process.LLContext.CreateLLProcessEntry()
 	process.DebugContext = debug.StartDebugGoroutine(entry)
 	id := uuid.New()
 	llProcess[id] = process

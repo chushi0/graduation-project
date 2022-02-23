@@ -16,5 +16,5 @@ namespace ipc {
 	void LLProcessSetBreakpoints(QString id, QList<Breakpoint> breakpoints);
 	bool LLProcessGetVariables(QString id, LLBreakpointVariables *variables,
 							   Breakpoint *point);
-	bool LLProcessExit(QString id);
+	bool LLProcessExit(QString id, LLExitResult *exitResult);
 } // namespace ipc

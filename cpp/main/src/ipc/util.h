@@ -11,6 +11,7 @@ namespace ipc {
 	void parseStringListList(QJsonArray array, QList<QStringList> *list);
 	void parseErrors(QJsonArray array, QList<ErrorType> *list);
 	void parseLLVariables(QJsonObject object, LLBreakpointVariables *out);
+	void parseLLExitResult(QJsonObject object, LLExitResult *out);
 	void parseHashStringStringList(QJsonObject object,
 								   QHash<QString, QStringList> *out);
 	void parseReplaceProduction(QJsonObject object, ReplaceProduction *out);
@@ -19,4 +20,5 @@ namespace ipc {
 	void parseHashStringInt(QJsonObject, QHash<QString, int> *out);
 	void parseHashStringHashStringInt(QJsonObject object,
 									  QHash<QString, QHash<QString, int>> *out);
+
 } // namespace ipc

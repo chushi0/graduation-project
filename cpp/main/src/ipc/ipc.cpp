@@ -120,7 +120,7 @@ bool ipc::LLProcessGetVariables(QString id, LLBreakpointVariables *variables,
 	return true;
 }
 
-bool ipc::LLProcessExit(QString id) {
+bool ipc::LLProcessExit(QString id, LLExitResult *exitResult) {
 	QJsonObject data;
 	data["id"] = id;
 	QJsonObject wrap;
@@ -130,6 +130,9 @@ bool ipc::LLProcessExit(QString id) {
 	auto resp = RpcRequest(req);
 	if (resp.ResponseCode == 1004) {
 		return false;
+	}
+	if (exitResult != nullptr) {
+		parseLLExitResult(resp.Data, exitResult);
 	}
 	return true;
 }

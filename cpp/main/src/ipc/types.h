@@ -51,4 +51,8 @@ namespace ipc {
 		QList<QStringList> selectSet;
 		QHash<QString, QHash<QString, int>> automation;
 	};
+	struct LLExitResult {
+		int code;
+		LLBreakpointVariables variable;
+	};
 } // namespace ipc

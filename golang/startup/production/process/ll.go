@@ -47,9 +47,8 @@ type LLKeyVariables struct {
 }
 
 type LLResult struct {
-	Code      int                    `json:"code"`
-	Detail    map[string]interface{} `json:"detail"`
-	Variables *LLKeyVariables        `json:"variables"`
+	Code      int             `json:"code"`
+	Variables *LLKeyVariables `json:"variables"`
 }
 
 type ReplaceProduction struct {
@@ -63,12 +62,13 @@ const (
 	LL_Error_SelectConflict = 2
 )
 
-func CreateLLProcessEntry(code string, withTranslate bool) func(*debug.DebugContext) {
-	ctx := &LLContext{
-		Code:          code,
-		WithTranslate: withTranslate,
-		KeyVariables:  &LLKeyVariables{},
+func NewLLContext() *LLContext {
+	return &LLContext{
+		KeyVariables: &LLKeyVariables{},
 	}
+}
+
+func (ctx *LLContext) CreateLLProcessEntry() func(*debug.DebugContext) {
 	return func(dc *debug.DebugContext) {
 		ctx.Context = dc
 		ctx.bury("start", 0)
@@ -126,12 +126,8 @@ func (ctx *LLContext) Calculate() {
 }
 
 func (ctx *LLContext) Build() {
-	// 检查Select集冲突
-	ctx.CheckSelectConflict()
 	// 生成自动机
 	ctx.GenerateAutomaton()
-	// 生成代码
-	ctx.GenerateYaccCode()
 }
 
 func (ctx *LLContext) ParseCode() {
@@ -139,9 +135,6 @@ func (ctx *LLContext) ParseCode() {
 	if len(errs.Errors) > 0 {
 		ctx.shutdownPipeline(&LLResult{
 			Code: LL_Error_ParseCode,
-			Detail: map[string]interface{}{
-				"errors": errs.Errors,
-			},
 		})
 	}
 	ctx.KeyVariables.Productions = prods
@@ -453,7 +446,9 @@ func (ctx *LLContext) ComputeFollowSet() {
 	ctx.bury("ComputeFollowSet", 1)
 
 	// 开始符号加入结束符
-	ctx.KeyVariables.FollowSet[ctx.Grammer.StartNonterminal].Put("$")
+	if _, ok := ctx.KeyVariables.FollowSet[ctx.Grammer.StartNonterminal]; ok {
+		ctx.KeyVariables.FollowSet[ctx.Grammer.StartNonterminal].Put("$")
+	}
 	ctx.bury("ComputeFollowSet", 2)
 
 	ctx.KeyVariables.ModifiedFlag = true
@@ -579,23 +574,8 @@ func (ctx *LLContext) ComputeSelectSet() {
 	ctx.bury("ComputeSelectSet", -1)
 }
 
-func (ctx *LLContext) CheckSelectConflict() {
-	selectSets := make(map[string]set.StringSet)
-	for i, prod := range ctx.KeyVariables.Productions {
-		if _, ok := selectSets[prod[0]]; !ok {
-			selectSets[prod[0]] = set.NewStringSet()
-		}
-		intersection := selectSets[prod[0]].Intersection(ctx.KeyVariables.SelectSet[i])
-		if len(intersection) > 0 {
-			ctx.shutdownPipeline(&LLResult{
-				Code: LL_Error_SelectConflict,
-			})
-		}
-		selectSets[prod[0]].UnionExcept(ctx.KeyVariables.SelectSet[i])
-	}
-}
-
 func (ctx *LLContext) GenerateAutomaton() {
+	conflict := false
 	ctx.KeyVariables.Automaton = make(map[string]map[string]int)
 	for nonterminal := range ctx.Grammer.Nonterminals {
 		ctx.KeyVariables.Automaton[nonterminal] = make(map[string]int)
@@ -610,10 +590,20 @@ func (ctx *LLContext) GenerateAutomaton() {
 		selectSet := ctx.KeyVariables.SelectSet[i]
 		nonterminal := prod[0]
 		for terminal := range selectSet {
-			ctx.KeyVariables.Automaton[nonterminal][terminal] = i
+			if ctx.KeyVariables.Automaton[nonterminal][terminal] == -1 {
+				ctx.KeyVariables.Automaton[nonterminal][terminal] = i
+			} else {
+				ctx.KeyVariables.Automaton[nonterminal][terminal] = -2
+				conflict = true
+			}
 		}
 	}
 	ctx.bury("GenerateAutomaton", -1)
+	if conflict {
+		ctx.shutdownPipeline(&LLResult{
+			Code: LL_Error_SelectConflict,
+		})
+	}
 }
 
 func (ctx *LLContext) GenerateYaccCode() {

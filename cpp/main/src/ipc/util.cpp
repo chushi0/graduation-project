@@ -60,6 +60,11 @@ void ipc::parseLLVariables(QJsonObject object, LLBreakpointVariables *out) {
 								 &out->automation);
 }
 
+void ipc::parseLLExitResult(QJsonObject object, LLExitResult *out) {
+	out->code = object["code"].toInt();
+	parseLLVariables(object["variables"].toObject(), &out->variable);
+}
+
 void ipc::parseHashStringStringList(QJsonObject object,
 									QHash<QString, QStringList> *out) {
 	for (auto &k : object.keys()) {
