@@ -21,6 +21,7 @@ private slots:
 
 	void runButtonTrigger();
 	void stepButtonTrigger();
+	void runToCursorTrigger();
 
 private:
 	enum ProcessStatus { Run, Pause, Exit };
@@ -31,9 +32,10 @@ private:
 	QTimer codeAnalyseTimer;
 	QString processId;
 	ProcessStatus status;
+	QString currentFunction;
 
 private:
-	void setProcessBreakpoint();
+	void setProcessBreakpoint(bool withSelectLine = false);
 	void clearListItemBackground();
 	void setAlogContent(QStringList content);
 	void highlightListItem(int line);
@@ -44,4 +46,18 @@ private:
 	void setupPointComputeFollowSet(int line);
 	void setupPointComputeSelectSet(int line);
 	void setupPointGenerateAutomaton(int line);
+	void appendBreakpoint(QList<ipc::Breakpoint> *breakpoints, int line);
+	void appendBreakpointRemoveLeftRecusion(QList<ipc::Breakpoint> *breakpoints,
+											int line);
+	void
+		appendBreakpointExtractCommonPrefix(QList<ipc::Breakpoint> *breakpoints,
+											int line);
+	void appendBreakpointComputeFirstSet(QList<ipc::Breakpoint> *breakpoints,
+										 int line);
+	void appendBreakpointComputeFollowSet(QList<ipc::Breakpoint> *breakpoints,
+										  int line);
+	void appendBreakpointComputeSelectSet(QList<ipc::Breakpoint> *breakpoints,
+										  int line);
+	void appendBreakpointGenerateAutomaton(QList<ipc::Breakpoint> *breakpoints,
+										   int line);
 };

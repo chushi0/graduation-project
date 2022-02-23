@@ -16,6 +16,8 @@ DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code, bool withTranslate)
 			&DemoLLAlogrithmWindow::runButtonTrigger);
 	connect(ui->stepButton, &QToolButton::clicked, this,
 			&DemoLLAlogrithmWindow::stepButtonTrigger);
+	connect(ui->runToCursorButton, &QToolButton::clicked, this,
+			&DemoLLAlogrithmWindow::runToCursorTrigger);
 
 	processId = ipc::LLProcessRequest(code, withTranslate);
 	setProcessBreakpoint();
@@ -40,7 +42,7 @@ void DemoLLAlogrithmWindow::closeEvent(QCloseEvent *event) {
 	deleteLater();
 }
 
-void DemoLLAlogrithmWindow::setProcessBreakpoint() {
+void DemoLLAlogrithmWindow::setProcessBreakpoint(bool withSelectLine) {
 	QList<ipc::Breakpoint> breakpoints;
 	const char *names[] = {"RemoveLeftRecusion", "ExtractCommonPrefix",
 						   "ComputeFirstSet",	 "ComputeFollowSet",
@@ -48,6 +50,11 @@ void DemoLLAlogrithmWindow::setProcessBreakpoint() {
 	for (auto name : names) {
 		breakpoints << ipc::Breakpoint{name, 0};
 		breakpoints << ipc::Breakpoint{name, -1};
+	}
+	auto indexes = ui->listWidget->selectionModel()->selectedIndexes();
+	for (QModelIndex index : indexes) {
+		int i = index.row();
+		appendBreakpoint(&breakpoints, i);
 	}
 	ipc::LLProcessSetBreakpoints(processId, breakpoints);
 }
@@ -99,6 +106,7 @@ void DemoLLAlogrithmWindow::runButtonTrigger() {
 	if (status != Pause || processId.isEmpty()) {
 		return;
 	}
+	setProcessBreakpoint();
 	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModeRun);
 	status = Run;
 }
@@ -112,8 +120,19 @@ void DemoLLAlogrithmWindow::stepButtonTrigger() {
 	processCheck();
 }
 
+void DemoLLAlogrithmWindow::runToCursorTrigger() {
+	if (status != Pause || processId.isEmpty()) {
+		return;
+	}
+	setProcessBreakpoint(true);
+	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModeRun);
+	status = Run;
+	processCheck();
+}
+
 void DemoLLAlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 	auto name = point.name;
+	currentFunction = name;
 	if (name == "RemoveLeftRecusion") {
 		setupPointRemoveLeftRecusion(point.line);
 	} else if (name == "ExtractCommonPrefix") {
@@ -400,4 +419,159 @@ void DemoLLAlogrithmWindow::setAlogContent(QStringList content) {
 	for (auto item : content) {
 		ui->listWidget->addItem(item);
 	}
+}
+
+void DemoLLAlogrithmWindow::appendBreakpoint(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+	if (currentFunction == "RemoveLeftRecusion") {
+		appendBreakpointRemoveLeftRecusion(breakpoints, line);
+	} else if (currentFunction == "ExtractCommonPrefix") {
+		appendBreakpointExtractCommonPrefix(breakpoints, line);
+	} else if (currentFunction == "ComputeFirstSet") {
+		appendBreakpointComputeFirstSet(breakpoints, line);
+	} else if (currentFunction == "ComputeFollowSet") {
+		appendBreakpointComputeFollowSet(breakpoints, line);
+	} else if (currentFunction == "ComputeSelectSet") {
+		appendBreakpointComputeSelectSet(breakpoints, line);
+	} else if (currentFunction == "GenerateAutomaton") {
+		appendBreakpointGenerateAutomaton(breakpoints, line);
+	}
+}
+
+void DemoLLAlogrithmWindow::appendBreakpointRemoveLeftRecusion(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+	switch (line) {
+		case 1:
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 1};
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 2};
+			break;
+		case 2:
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 3};
+			break;
+		case 3:
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 4};
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 5};
+			break;
+		case 4:
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 6};
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 7};
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 8};
+			*breakpoints << ipc::Breakpoint{"RemoveLeftRecusion", 9};
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::appendBreakpointExtractCommonPrefix(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+	switch (line) {
+		case 1:
+			*breakpoints << ipc::Breakpoint{"ExtractCommonPrefix", 1};
+			*breakpoints << ipc::Breakpoint{"ExtractCommonPrefix", 2};
+			break;
+		case 2:
+			*breakpoints << ipc::Breakpoint{"ExtractCommonPrefix", 3};
+			*breakpoints << ipc::Breakpoint{"ExtractCommonPrefix", 4};
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::appendBreakpointComputeFirstSet(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+	switch (line) {
+		case 1:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 2};
+			break;
+		case 2:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 3};
+			break;
+		case 3:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 4};
+			break;
+		case 4:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 5};
+			break;
+		case 5:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 6};
+			break;
+		case 6:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 7};
+			break;
+		case 7:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 10};
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::appendBreakpointComputeFollowSet(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+	switch (line) {
+		case 1:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 1};
+			break;
+		case 2:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 2};
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 4};
+			break;
+		case 3:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 5};
+			break;
+		case 4:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 8};
+			break;
+		case 5:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 6};
+			break;
+		case 6:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 7};
+			break;
+		case 7:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 9};
+			break;
+		case 8:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 10};
+			break;
+		case 9:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 11};
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 12};
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::appendBreakpointComputeSelectSet(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+
+	switch (line) {
+		case 1:
+			*breakpoints << ipc::Breakpoint{"ComputeSelectSet", 1};
+			break;
+		case 2:
+			*breakpoints << ipc::Breakpoint{"ComputeSelectSet", 2};
+			break;
+		case 3:
+			*breakpoints << ipc::Breakpoint{"ComputeSelectSet", 3};
+			break;
+		case 4:
+			*breakpoints << ipc::Breakpoint{"ComputeSelectSet", 4};
+			break;
+		case 5:
+			*breakpoints << ipc::Breakpoint{"ComputeSelectSet", 5};
+			break;
+		case 6:
+			*breakpoints << ipc::Breakpoint{"ComputeSelectSet", 6};
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLLAlogrithmWindow::appendBreakpointGenerateAutomaton(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
 }
