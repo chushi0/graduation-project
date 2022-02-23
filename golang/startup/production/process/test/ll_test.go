@@ -8,14 +8,19 @@ import (
 )
 
 func TestLLRemoveLeftRecusion(t *testing.T) {
-	entry := process.CreateLLProcessEntry("A := b c d\n| b c e\n|b f")
+	ctx := process.NewLLContext()
+	ctx.Code = "A := b c d\n| b c e\n|b f"
+	ctx.WithTranslate = true
+	entry := ctx.CreateLLProcessEntry()
 	dbg := debug.NewDebugContext()
 	dbg.SwitchRunMode(debug.RunMode_Run)
 	entry(dbg)
 }
 
 func TestLLComputeFirstSetRecusion(t *testing.T) {
-	entry := process.CreateLLProcessEntry(`
+	ctx := process.NewLLContext()
+	ctx.WithTranslate = true
+	ctx.Code = `
 	S := E
 	E := T E0
 	E0 := + T E0
@@ -25,7 +30,8 @@ func TestLLComputeFirstSetRecusion(t *testing.T) {
 		|
 	F := ( E )
 		| id
-	`)
+	`
+	entry := ctx.CreateLLProcessEntry()
 	dbg := debug.NewDebugContext()
 	dbg.SwitchRunMode(debug.RunMode_Run)
 	entry(dbg)
