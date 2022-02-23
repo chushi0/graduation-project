@@ -129,7 +129,11 @@
    <addaction name="menu_2"/>
    <addaction name="menu_3"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="styleSheet">
+    <string notr="true">QStatusBar::item{border: 0px}</string>
+   </property>
+  </widget>
   <action name="actionNewFile">
    <property name="text">
     <string>新建</string>

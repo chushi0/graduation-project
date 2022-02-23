@@ -218,7 +218,11 @@
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="styleSheet">
+    <string notr="true">QStatusBar::item{border: 0px}</string>
+   </property>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>

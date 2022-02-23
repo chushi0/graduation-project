@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./ui_mainwindow.h"
+#include "widget/ClickableLabel.h"
 #include <QMainWindow>
 #include <QTimer>
 
@@ -27,6 +28,7 @@ private:
 
 private:
 	Ui::MainWindow *ui;
+	ClickableLabel *statusLabel;
 	QTimer codeAnalyseTimer;
 
 	QString parseId;

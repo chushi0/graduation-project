@@ -9,16 +9,19 @@
 DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code, bool withTranslate)
 	: QMainWindow(), ui(new Ui::DemoLLWindow) {
 	ui->setupUi(this);
-	processId = ipc::LLProcessRequest(code, withTranslate);
-	setProcessBreakpoint();
-	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModeRun);
-	status = Run;
-	processCheck();
+	statusLabel = new QLabel(ui->statusbar);
+	ui->statusbar->addWidget(statusLabel);
 
 	connect(ui->runButton, &QToolButton::clicked, this,
 			&DemoLLAlogrithmWindow::runButtonTrigger);
 	connect(ui->stepButton, &QToolButton::clicked, this,
 			&DemoLLAlogrithmWindow::stepButtonTrigger);
+
+	processId = ipc::LLProcessRequest(code, withTranslate);
+	setProcessBreakpoint();
+	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModeRun);
+	status = Run;
+	processCheck();
 
 	codeAnalyseTimer.start(100);
 	connect(&codeAnalyseTimer, &QTimer::timeout, this,
@@ -70,17 +73,17 @@ void DemoLLAlogrithmWindow::processCheck() {
 		processId = "";
 		switch (result.code) {
 			case 0:
-				ui->statusbar->showMessage("算法演示完成");
+				statusLabel->setText("算法演示完成");
 				QMessageBox::information(this, "演示完成", "算法已演示完成");
 				break;
 			case 1:
-				ui->statusbar->showMessage("产生式代码解析错误");
+				statusLabel->setText("产生式代码解析错误");
 				QMessageBox::information(this, "演示错误",
 										 "产生式代码解析错误");
 				close();
 				break;
 			case 2:
-				ui->statusbar->showMessage("Select 集合冲突，无法生成自动机");
+				statusLabel->setText("Select 集合冲突，无法生成自动机");
 				point.line = -1;
 				point.name = "GenerateAutomaton";
 				ui->keyWidget->setVariableAndPoint(result.variable, point);
@@ -131,7 +134,7 @@ void DemoLLAlogrithmWindow::setupPointRemoveLeftRecusion(int line) {
 	switch (line) {
 		case 0:
 			{
-				ui->statusbar->showMessage("当前算法：清除左递归");
+				statusLabel->setText("当前算法：清除左递归");
 				QStringList list;
 				list << "按照某顺序排列非终结符";
 				list << "循环 i 从 1 到 n（非终结符数量）：";
@@ -173,7 +176,7 @@ void DemoLLAlogrithmWindow::setupPointExtractCommonPrefix(int line) {
 	switch (line) {
 		case 0:
 			{
-				ui->statusbar->showMessage("当前算法：提取公共前缀");
+				statusLabel->setText("当前算法：提取公共前缀");
 				QStringList list;
 				list << "按照一定顺序排列非终结符";
 				list << "循环 i 从 1 到 n（非终结符数量）：";
@@ -203,7 +206,7 @@ void DemoLLAlogrithmWindow::setupPointComputeFirstSet(int line) {
 	switch (line) {
 		case 0:
 			{
-				ui->statusbar->showMessage("当前算法：计算 First 集");
+				statusLabel->setText("当前算法：计算 First 集");
 				QStringList list;
 				list << "按照一定顺序排列产生式";
 				list << "循环 i 从 1 到 n（产生式数量）：";
@@ -253,7 +256,7 @@ void DemoLLAlogrithmWindow::setupPointComputeFollowSet(int line) {
 	switch (line) {
 		case 0:
 			{
-				ui->statusbar->showMessage("当前算法：计算 Follow 集");
+				statusLabel->setText("当前算法：计算 Follow 集");
 				QStringList list;
 				list << "按照一定顺序排列产生式";
 				list << "将结束符加入开始符号的Follow集";
@@ -319,7 +322,7 @@ void DemoLLAlogrithmWindow::setupPointComputeSelectSet(int line) {
 	switch (line) {
 		case 0:
 			{
-				ui->statusbar->showMessage("当前算法：计算 Select 集");
+				statusLabel->setText("当前算法：计算 Select 集");
 				QStringList list;
 				list << "按照一定顺序排列产生式";
 				list << "循环 i 从 1 到 n（产生式数量）：";
@@ -364,7 +367,7 @@ void DemoLLAlogrithmWindow::setupPointGenerateAutomaton(int line) {
 	switch (line) {
 		case 0:
 			{
-				ui->statusbar->showMessage("当前算法：生成自动机");
+				statusLabel->setText("当前算法：生成自动机");
 				QStringList list;
 				list << "根据 Select 集绘制表格";
 				list << "";

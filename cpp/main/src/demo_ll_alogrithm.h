@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./ui_demo_ll_window.h"
+#include <QLabel>
 #include <QMainWindow>
 #include <QProgressBar>
 #include <QTimer>
@@ -26,6 +27,7 @@ private:
 
 private:
 	Ui::DemoLLWindow *ui;
+	QLabel *statusLabel;
 	QTimer codeAnalyseTimer;
 	QString processId;
 	ProcessStatus status;

@@ -30,6 +30,8 @@ MainWindow::MainWindow(QWidget *parent)
 	ui->codeView->setIndentationsUseTabs(false);
 	ui->codeView->setTabWidth(4);
 	ui->codeView->setCaretLineVisible(true);
+	statusLabel = new ClickableLabel(ui->statusbar);
+	ui->statusbar->addWidget(statusLabel);
 
 	connect(ui->codeView, &QsciScintilla::linesChanged, this,
 			&MainWindow::codeLineChange);
@@ -69,7 +71,7 @@ void MainWindow::codeChange() {
 		ipc::ProductionParseCancel(parseId);
 	}
 	parseId = ipc::ProductionParseStart(ui->codeView->text());
-	ui->statusbar->showMessage("正在解析产生式代码...");
+	statusLabel->setText("正在解析产生式代码...");
 	receiveProduction();
 }
 
@@ -99,9 +101,9 @@ void MainWindow::receiveProduction() {
 		return;
 	}
 	parseId = "";
-	ui->statusbar->showMessage(QString("%1 个错误，%2 个警告")
-								   .arg(result.errors.size())
-								   .arg(result.warnings.size()));
+	statusLabel->setText(QString("%1 个错误，%2 个警告")
+							 .arg(result.errors.size())
+							 .arg(result.warnings.size()));
 
 	updateList(ui->nonterminalList, result.nonterminals);
 	updateList(ui->terminalList, result.terminals);
