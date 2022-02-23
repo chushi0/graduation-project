@@ -153,6 +153,7 @@ void DemoLLAlogrithmWindow::setupPointRemoveLeftRecusion(int line) {
 	switch (line) {
 		case 0:
 			{
+				ui->step1->setEnabled(true);
 				statusLabel->setText("当前算法：清除左递归");
 				QStringList list;
 				list << "按照某顺序排列非终结符";
@@ -195,6 +196,7 @@ void DemoLLAlogrithmWindow::setupPointExtractCommonPrefix(int line) {
 	switch (line) {
 		case 0:
 			{
+				ui->step2->setEnabled(true);
 				statusLabel->setText("当前算法：提取公共前缀");
 				QStringList list;
 				list << "按照一定顺序排列非终结符";
@@ -225,6 +227,7 @@ void DemoLLAlogrithmWindow::setupPointComputeFirstSet(int line) {
 	switch (line) {
 		case 0:
 			{
+				ui->step3->setEnabled(true);
 				statusLabel->setText("当前算法：计算 First 集");
 				QStringList list;
 				list << "按照一定顺序排列产生式";
@@ -275,6 +278,7 @@ void DemoLLAlogrithmWindow::setupPointComputeFollowSet(int line) {
 	switch (line) {
 		case 0:
 			{
+				ui->step4->setEnabled(true);
 				statusLabel->setText("当前算法：计算 Follow 集");
 				QStringList list;
 				list << "按照一定顺序排列产生式";
@@ -341,6 +345,7 @@ void DemoLLAlogrithmWindow::setupPointComputeSelectSet(int line) {
 	switch (line) {
 		case 0:
 			{
+				ui->step5->setEnabled(true);
 				statusLabel->setText("当前算法：计算 Select 集");
 				QStringList list;
 				list << "按照一定顺序排列产生式";
@@ -386,6 +391,7 @@ void DemoLLAlogrithmWindow::setupPointGenerateAutomaton(int line) {
 	switch (line) {
 		case 0:
 			{
+				ui->step6->setEnabled(true);
 				statusLabel->setText("当前算法：生成自动机");
 				QStringList list;
 				list << "根据 Select 集绘制表格";
