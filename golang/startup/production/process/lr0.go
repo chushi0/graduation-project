@@ -1,6 +1,7 @@
 package process
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/chushi0/graduation_project/golang/startup/debug"
@@ -33,7 +34,15 @@ type LR0Variables struct {
 
 	ClosureMap     *LR0ItemClosureMap `json:"closure_map"`
 	CurrentClosure *LR0ItemClosure    `json:"current_closure"`
+
+	ActionTable []map[string]string `json:"action_table"`
+	GotoTable   []map[string]int    `json:"goto_table"`
 }
+
+const (
+	LR0_Action_ShiftReduce  = "移入-归约冲突"
+	LR0_Action_ReduceReduce = "归约-归约冲突"
+)
 
 type LR0Result struct {
 	Code      int           `json:"code"`
@@ -371,4 +380,98 @@ func (ctx *LR0Context) ItemClosure(items []LR0Item) int {
 }
 
 func (ctx *LR0Context) GenerateAutomaton() {
+	conflict := false
+	itemCount := len(ctx.KeyVariables.ClosureMap.Closures)
+	ctx.KeyVariables.ActionTable = make([]map[string]string, itemCount)
+	ctx.KeyVariables.GotoTable = make([]map[string]int, itemCount)
+	for i := 0; i < itemCount; i++ {
+		ctx.KeyVariables.ActionTable[i] = make(map[string]string)
+		ctx.KeyVariables.GotoTable[i] = make(map[string]int)
+		ctx.KeyVariables.ActionTable[i]["$"] = ""
+		for terminal := range ctx.Grammer.Terminals {
+			ctx.KeyVariables.ActionTable[i][terminal] = ""
+		}
+		for nonterminal := range ctx.Grammer.Nonterminals {
+			ctx.KeyVariables.GotoTable[i][nonterminal] = -1
+		}
+	}
+
+	for _, edge := range ctx.KeyVariables.ClosureMap.Edges {
+		from := edge.From
+		to := edge.To
+		symbol := edge.Symbol
+		if ctx.Grammer.Terminals.Contains(symbol) {
+			ctx.KeyVariables.ActionTable[from][symbol] = fmt.Sprintf("s%d", to)
+		} else {
+			ctx.KeyVariables.GotoTable[from][symbol] = to
+		}
+	}
+
+	if ctx.SLR {
+		conflict = ctx.GenerateSLRReduceAutomaton()
+	} else {
+		conflict = ctx.GenerateReduceAutomaton()
+	}
+
+	if conflict {
+		ctx.shutdownPipeline(&LR0Result{
+			Code: LR0_Error_Conflict,
+		})
+	}
+}
+
+func (ctx *LR0Context) GenerateSLRReduceAutomaton() bool {
+	conflict := false
+	for i, closure := range ctx.KeyVariables.ClosureMap.Closures {
+		for _, item := range *closure {
+			prod := ctx.KeyVariables.Productions[item.Prod]
+			if len(prod) == item.Progress+1 {
+				if prod[0] == ctx.Grammer.StartNonterminal {
+					ctx.SetAutomatonReduce(i, "$", "acc")
+				} else {
+					reduceText := fmt.Sprintf("r%d", item.Prod)
+					for terminal := range ctx.KeyVariables.FollowSet[prod[0]] {
+						ctx.SetAutomatonReduce(i, terminal, reduceText)
+					}
+				}
+			}
+		}
+	}
+	return conflict
+}
+
+func (ctx *LR0Context) GenerateReduceAutomaton() bool {
+	conflict := false
+	for i, closure := range ctx.KeyVariables.ClosureMap.Closures {
+		for _, item := range *closure {
+			prod := ctx.KeyVariables.Productions[item.Prod]
+			if len(prod) == item.Progress+1 {
+				if prod[0] == ctx.Grammer.StartNonterminal {
+					ctx.SetAutomatonReduce(i, "$", "acc")
+				} else {
+					reduceText := fmt.Sprintf("r%d", item.Prod)
+					ctx.SetAutomatonReduce(i, "$", reduceText)
+					for terminal := range ctx.Grammer.Terminals {
+						ctx.SetAutomatonReduce(i, terminal, reduceText)
+					}
+				}
+			}
+		}
+	}
+	return conflict
+}
+
+func (ctx *LR0Context) SetAutomatonReduce(closure int, terminal string, reduce string) {
+	if ctx.KeyVariables.ActionTable[closure][terminal] != "" {
+		switch ctx.KeyVariables.ActionTable[closure][terminal][0] {
+		case 'r':
+		case 'a':
+			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ReduceReduce
+		case 's':
+			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ShiftReduce
+		}
+		return
+	}
+
+	ctx.KeyVariables.ActionTable[closure][terminal] = reduce
 }
