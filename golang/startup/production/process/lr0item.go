@@ -42,8 +42,8 @@ func (closure *LR0ItemClosure) Equals(another *LR0ItemClosure) bool {
 }
 
 type LR0ItemClosureMap struct {
-	Closures []*LR0ItemClosure
-	Edges    []*LR0ItemClosureMapEdge
+	Closures []*LR0ItemClosure        `json:"closures"`
+	Edges    []*LR0ItemClosureMapEdge `json:"edges"`
 }
 
 type LR0ItemClosureMapEdge struct {

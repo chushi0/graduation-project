@@ -55,4 +55,37 @@ namespace ipc {
 		int code;
 		LLBreakpointVariables variable;
 	};
+
+	struct LRItem {
+		int production;
+		int progress;
+	};
+	struct LRItemClosureMapEdge {
+		int from, to;
+		QString symbol;
+	};
+	typedef QList<LRItem> LRItemClosure;
+	struct LRItemClosureMap {
+		QList<LRItemClosure> closures;
+		QList<LRItemClosureMapEdge> edges;
+	};
+
+	struct LR0BreakpointVariables {
+		QStringList terminals;
+		QList<QStringList> productions;
+		int loopVariableI, loopVariableJ, loopVariableK;
+		bool modifiedFlag;
+		QStringList nonterminalOrders;
+		QStringList processedSymbol;
+		QString currentProcessSymbol;
+		QHash<QString, QStringList> firstSet, followSet;
+		LRItemClosureMap closureMap;
+		LRItemClosure currentClosure;
+		QList<QHash<QString, QString>> actionTable;
+		QList<QHash<QString, int>> gotoTable;
+	};
+	struct LR0ExitResult {
+		int code;
+		LR0BreakpointVariables variable;
+	};
 } // namespace ipc

@@ -1,22 +1,55 @@
 #include "util.h"
 
-void ipc::parseJsonArrayToStringList(QJsonArray array, QStringList *list) {
-	QStringList result;
-	for (auto i : array) {
-		result.append(i.toString());
-	}
-	*list = result;
-}
+#define cast_object toObject
+#define cast_array toArray
+#define cast_string toString
+#define cast_int toInt
+#define cast_bool toBool
 
-void ipc::parseStringListList(QJsonArray array, QList<QStringList> *list) {
-	QList<QStringList> result;
-	for (auto i : array) {
-		QStringList item;
-		ipc::parseJsonArrayToStringList(i.toArray(), &item);
-		result.append(item);
+#define hash(k, v) QHash<k, v>
+#define list(e) QList<e>
+
+#define def_array_value(name, type, cast)                                      \
+	void ipc::parseArray##name(QJsonArray array, QList<type> *out) {           \
+		for (auto i : array) {                                                 \
+			auto o = i.cast();                                                 \
+			type res;                                                          \
+			parse##name(o, &res);                                              \
+			out->append(res);                                                  \
+		}                                                                      \
 	}
-	*list = result;
-}
+
+#define def_object_value(name, type, cast)                                     \
+	void ipc::parseHashString##name(QJsonObject object,                        \
+									QHash<QString, type> *out) {               \
+		for (auto &k : object.keys()) {                                        \
+			type res;                                                          \
+			parse##name(object[k].cast(), &res);                               \
+			(*out)[k] = res;                                                   \
+		}                                                                      \
+	}
+#define def_basic(name, type)                                                  \
+	inline void parse##name(type in, type *out) {                              \
+		*out = in;                                                             \
+	}
+
+def_basic(String, QString);
+def_basic(Int, int);
+def_basic(Bool, bool);
+
+def_array_value(String, QString, cast_string);
+def_array_value(ArrayString, QStringList, cast_array);
+def_array_value(HashStringInt, hash(QString, int), cast_object);
+def_array_value(HashStringString, hash(QString, QString), cast_object);
+def_object_value(ArrayString, QStringList, cast_array);
+def_object_value(Int, int, cast_int);
+def_object_value(String, QString, cast_string);
+def_object_value(HashStringInt, hash(QString, int), cast_object);
+
+def_array_value(ReplaceProduction, ReplaceProduction, cast_object);
+def_array_value(LRItem, LRItem, cast_object);
+def_array_value(ArrayLRItem, LRItemClosure, cast_array);
+def_array_value(LRItemClosureMapEdge, LRItemClosureMapEdge, cast_object);
 
 void ipc::parseErrors(QJsonArray array, QList<ipc::ErrorType> *list) {
 	QList<ipc::ErrorType> result;
@@ -35,27 +68,26 @@ void ipc::parseErrors(QJsonArray array, QList<ipc::ErrorType> *list) {
 }
 
 void ipc::parseLLVariables(QJsonObject object, LLBreakpointVariables *out) {
-	parseJsonArrayToStringList(object["terminals"].toArray(), &out->terminals);
-	parseStringListList(object["productions"].toArray(), &out->productions);
+	parseArrayString(object["terminals"].toArray(), &out->terminals);
+	parseArrayArrayString(object["productions"].toArray(), &out->productions);
 	out->loopVariableI = object["loop_variable_i"].toInt();
 	out->loopVariableJ = object["loop_variable_j"].toInt();
 	out->loopVariableK = object["loop_variable_k"].toInt();
 	out->modifiedFlag = object["modified_flag"].toBool();
-	parseJsonArrayToStringList(object["nonterminal_orders"].toArray(),
-							   &out->nonterminalOrders);
-	parseJsonArrayToStringList(object["current_process_production"].toArray(),
-							   &out->currentProcessProduction);
-	parseStringListList(object["remove_production"].toArray(),
-						&out->removeProductions);
-	parseStringListList(object["add_production"].toArray(),
-						&out->addProductions);
-	parseReplaceProductionArray(object["replace_production"].toArray(),
+	parseArrayString(object["nonterminal_orders"].toArray(),
+					 &out->nonterminalOrders);
+	parseArrayString(object["current_process_production"].toArray(),
+					 &out->currentProcessProduction);
+	parseArrayArrayString(object["remove_production"].toArray(),
+						  &out->removeProductions);
+	parseArrayArrayString(object["add_production"].toArray(),
+						  &out->addProductions);
+	parseArrayReplaceProduction(object["replace_production"].toArray(),
 								&out->replaceProduction);
-	parseJsonArrayToStringList(object["common_prefix"].toArray(),
-							   &out->commonPrefix);
-	parseHashStringStringList(object["first"].toObject(), &out->firstSet);
-	parseHashStringStringList(object["follow"].toObject(), &out->followSet);
-	parseStringListList(object["select"].toArray(), &out->selectSet);
+	parseArrayString(object["common_prefix"].toArray(), &out->commonPrefix);
+	parseHashStringArrayString(object["first"].toObject(), &out->firstSet);
+	parseHashStringArrayString(object["follow"].toObject(), &out->followSet);
+	parseArrayArrayString(object["select"].toArray(), &out->selectSet);
 	parseHashStringHashStringInt(object["automaton"].toObject(),
 								 &out->automation);
 }
@@ -65,36 +97,49 @@ void ipc::parseLLExitResult(QJsonObject object, LLExitResult *out) {
 	parseLLVariables(object["variables"].toObject(), &out->variable);
 }
 
-void ipc::parseHashStringStringList(QJsonObject object,
-									QHash<QString, QStringList> *out) {
-	for (auto &k : object.keys()) {
-		ipc::parseJsonArrayToStringList(object[k].toArray(), &(*out)[k]);
-	}
+void ipc::parseLR0Variables(QJsonObject object, LR0BreakpointVariables *out) {
+	parseArrayString(object["terminals"].toArray(), &out->terminals);
+	parseArrayArrayString(object["productions"].toArray(), &out->productions);
+	out->loopVariableI = object["loop_variable_i"].toInt();
+	out->loopVariableJ = object["loop_variable_j"].toInt();
+	out->loopVariableK = object["loop_variable_k"].toInt();
+	out->modifiedFlag = object["modified_flag"].toBool();
+	parseArrayString(object["nonterminal_orders"].toArray(),
+					 &out->nonterminalOrders);
+	parseArrayString(object["process_symbol"].toArray(), &out->processedSymbol);
+	out->currentProcessSymbol = object["current_symbol"].toString();
+	parseHashStringArrayString(object["first"].toObject(), &out->firstSet);
+	parseHashStringArrayString(object["follow"].toObject(), &out->followSet);
+	parseLRItemClosureMap(object["closure_map"].toObject(), &out->closureMap);
+	parseArrayLRItem(object["current_closure"].toArray(), &out->currentClosure);
+	parseArrayHashStringString(object["action_table"].toArray(),
+							   &out->actionTable);
+	parseArrayHashStringInt(object["goto_table"].toArray(), &out->gotoTable);
+}
+
+void ipc::parseLR0ExitResult(QJsonObject object, LR0ExitResult *out) {
+	out->code = object["code"].toInt();
+	parseLR0Variables(object["variables"].toObject(), &out->variable);
 }
 
 void ipc::parseReplaceProduction(QJsonObject object, ReplaceProduction *out) {
-	parseJsonArrayToStringList(object["original"].toArray(), &out->original);
-	parseJsonArrayToStringList(object["replace"].toArray(), &out->replace);
+	parseArrayString(object["original"].toArray(), &out->original);
+	parseArrayString(object["replace"].toArray(), &out->replace);
 }
 
-void ipc::parseReplaceProductionArray(QJsonArray array,
-									  QList<ReplaceProduction> *out) {
-	for (auto i : array) {
-		auto o = i.toObject();
-		ReplaceProduction rp;
-		parseReplaceProduction(o, &rp);
-		out->append(rp);
-	}
+void ipc::parseLRItem(QJsonObject object, LRItem *out) {
+	out->production = object["prod"].toInt();
+	out->progress = object["progress"].toInt();
 }
 
-void ipc::parseHashStringInt(QJsonObject object, QHash<QString, int> *out) {
-	for (auto &k : object.keys()) {
-		(*out)[k] = object[k].toInt();
-	}
+void ipc::parseLRItemClosureMapEdge(QJsonObject object,
+									LRItemClosureMapEdge *out) {
+	out->from = object["from"].toInt();
+	out->to = object["to"].toInt();
+	out->symbol = object["symbol"].toString();
 }
-void ipc::parseHashStringHashStringInt(
-	QJsonObject object, QHash<QString, QHash<QString, int>> *out) {
-	for (auto &k : object.keys()) {
-		ipc::parseHashStringInt(object[k].toObject(), &(*out)[k]);
-	}
+
+void ipc::parseLRItemClosureMap(QJsonObject object, LRItemClosureMap *out) {
+	parseArrayArrayLRItem(object["closures"].toArray(), &out->closures);
+	parseArrayLRItemClosureMapEdge(object["edges"].toArray(), &out->edges);
 }

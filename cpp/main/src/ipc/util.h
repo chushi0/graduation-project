@@ -6,19 +6,43 @@
 #include <QJsonArray>
 #include <QStringList>
 
+#define hash(k, v) QHash<k, v>
+#define list(e) QList<e>
+#define def_array_value(name, type)                                            \
+	void parseArray##name(QJsonArray array, QList<type> *out)
+#define def_object_value(name, type)                                           \
+	void parseHashString##name(QJsonObject object, QHash<QString, type> *out)
+
 namespace ipc {
-	void parseJsonArrayToStringList(QJsonArray array, QStringList *list);
-	void parseStringListList(QJsonArray array, QList<QStringList> *list);
 	void parseErrors(QJsonArray array, QList<ErrorType> *list);
 	void parseLLVariables(QJsonObject object, LLBreakpointVariables *out);
 	void parseLLExitResult(QJsonObject object, LLExitResult *out);
-	void parseHashStringStringList(QJsonObject object,
-								   QHash<QString, QStringList> *out);
+	void parseLR0Variables(QJsonObject object, LR0BreakpointVariables *out);
+	void parseLR0ExitResult(QJsonObject object, LR0ExitResult *out);
+
 	void parseReplaceProduction(QJsonObject object, ReplaceProduction *out);
-	void parseReplaceProductionArray(QJsonArray array,
-									 QList<ReplaceProduction> *out);
-	void parseHashStringInt(QJsonObject, QHash<QString, int> *out);
-	void parseHashStringHashStringInt(QJsonObject object,
-									  QHash<QString, QHash<QString, int>> *out);
+	def_array_value(ReplaceProduction, ReplaceProduction);
+
+	void parseLRItem(QJsonObject object, LRItem *out);
+	void parseLRItemClosureMapEdge(QJsonObject object,
+								   LRItemClosureMapEdge *out);
+	void parseLRItemClosureMap(QJsonObject object, LRItemClosureMap *out);
+	def_array_value(LRItem, LRItem);
+	def_array_value(ArrayLRItem, LRItemClosure);
+	def_array_value(LRItemClosureMapEdge, LRItemClosureMapEdge);
+
+	def_array_value(String, QString);
+	def_array_value(ArrayString, QStringList);
+	def_array_value(HashStringInt, hash(QString, int));
+	def_array_value(HashStringString, hash(QString, QString));
+	def_object_value(ArrayString, QStringList);
+	def_object_value(Int, int);
+	def_object_value(String, QString);
+	def_object_value(HashStringInt, hash(QString, int));
 
 } // namespace ipc
+
+#undef def_array_value
+#undef def_object_value
+#undef hash
+#undef list
