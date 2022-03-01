@@ -21,6 +21,8 @@ private slots:
 	void actionNewFile();
 	void actionAlogLL();
 	void actionAlogLLWithoutTranslate();
+	void actionAlogLR0();
+	void actionAlogSLR();
 	void receiveProduction();
 
 private:

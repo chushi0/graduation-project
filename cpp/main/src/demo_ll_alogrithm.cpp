@@ -109,6 +109,7 @@ void DemoLLAlogrithmWindow::runButtonTrigger() {
 	setProcessBreakpoint();
 	ipc::LLProcessSwitchMode(processId, ipc::LLProcessModeRun);
 	status = Run;
+	processCheck();
 }
 
 void DemoLLAlogrithmWindow::stepButtonTrigger() {
