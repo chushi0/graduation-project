@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ipc/types.h"
+#include "../util/layout.h"
 #include <QPainter>
 #include <QWidget>
 
@@ -30,10 +31,23 @@ private:
 	float lastMouseX, lastMouseY;
 	bool mousePressed;
 
+	QList<layout::Point> points;
+	QList<layout::Edge> edges;
+
 private:
 	struct PaintContext {
 		QPainter *painter;
 		QFont *normalFont, *smallFont;
 		QFontMetrics *normalFontMetrics, *smallFontMetrics;
 	};
+
+	void paintLR0ItemClosure(const PaintContext &ctx);
+
+	void computeItemLayout(const PaintContext &ctx,
+						   QList<layout::Point> &points,
+						   QList<layout::Edge> &edges);
+	void computeItemWidthAndHeight(const PaintContext &ctx,
+								   ipc::LRItemClosure item,
+								   layout::Point &point);
+	int computeItemWidth(const PaintContext &ctx, ipc::LRItem item);
 };

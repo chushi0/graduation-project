@@ -380,6 +380,7 @@ func (ctx *LR0Context) ItemClosure(items []LR0Item) int {
 }
 
 func (ctx *LR0Context) GenerateAutomaton() {
+	ctx.bury("GenerateAutomaton", 0)
 	conflict := false
 	itemCount := len(ctx.KeyVariables.ClosureMap.Closures)
 	ctx.KeyVariables.ActionTable = make([]map[string]string, itemCount)
@@ -418,6 +419,7 @@ func (ctx *LR0Context) GenerateAutomaton() {
 			Code: LR0_Error_Conflict,
 		})
 	}
+	ctx.bury("GenerateAutomaton", -1)
 }
 
 func (ctx *LR0Context) GenerateSLRReduceAutomaton() bool {
