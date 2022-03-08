@@ -32,6 +32,8 @@ private:
 	bool mousePressed;
 	// paintProductionList 安全宽度（右侧可渲染）
 	int productionSafeWidth;
+	// paintLR0ItemClosure 宽高
+	int itemClosureWidth, itemClosureHeight;
 
 	QList<layout::Point> points;
 	QList<layout::Edge> edges;

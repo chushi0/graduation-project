@@ -399,7 +399,6 @@ func (ctx *LR0Context) ItemClosure(items []LR0Item) int {
 }
 
 func (ctx *LR0Context) GenerateAutomaton() {
-	ctx.bury("GenerateAutomaton", 0)
 	conflict := false
 	itemCount := len(ctx.KeyVariables.ClosureMap.Closures)
 	ctx.KeyVariables.ActionTable = make([]map[string]string, itemCount)
@@ -438,10 +437,10 @@ func (ctx *LR0Context) GenerateAutomaton() {
 			Code: LR0_Error_Conflict,
 		})
 	}
-	ctx.bury("GenerateAutomaton", -1)
 }
 
 func (ctx *LR0Context) GenerateSLRReduceAutomaton() bool {
+	ctx.bury("GenerateSLRAutomaton", 0)
 	conflict := false
 	for i, closure := range ctx.KeyVariables.ClosureMap.Closures {
 		for _, item := range *closure {
@@ -458,10 +457,12 @@ func (ctx *LR0Context) GenerateSLRReduceAutomaton() bool {
 			}
 		}
 	}
+	ctx.bury("GenerateSLRAutomaton", -1)
 	return conflict
 }
 
 func (ctx *LR0Context) GenerateReduceAutomaton() bool {
+	ctx.bury("GenerateLR0Automaton", 0)
 	conflict := false
 	for i, closure := range ctx.KeyVariables.ClosureMap.Closures {
 		for _, item := range *closure {
@@ -479,6 +480,7 @@ func (ctx *LR0Context) GenerateReduceAutomaton() bool {
 			}
 		}
 	}
+	ctx.bury("GenerateLR0Automaton", -1)
 	return conflict
 }
 

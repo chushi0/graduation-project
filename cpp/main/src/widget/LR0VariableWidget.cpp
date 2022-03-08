@@ -117,6 +117,7 @@ void LR0VariableWidget::paintComputeItemClosure(const PaintContext &ctx) {
 }
 
 void LR0VariableWidget::paintLRGenerateAutomaton(const PaintContext &ctx) {
+	paintFollowTable(ctx);
 	paintLR0ItemClosure(ctx);
 }
 
@@ -348,6 +349,8 @@ void LR0VariableWidget::computeItemLayout(const PaintContext &ctx,
 	}
 	int width, height;
 	layout::layoutLRItemImage(points, edges, &width, &height);
+	itemClosureWidth = width;
+	itemClosureHeight = height;
 }
 
 void LR0VariableWidget::computeItemWidthAndHeight(const PaintContext &ctx,
@@ -399,7 +402,7 @@ QString LR0VariableWidget::getItemString(const ipc::LRItem &item) {
 		prod += production[i];
 	}
 	if (production.size() - 1 == item.progress) {
-		prod += "·";
+		prod += " ·";
 	}
 	return prod;
 }

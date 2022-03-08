@@ -44,9 +44,10 @@ void DemoLLAlogrithmWindow::closeEvent(QCloseEvent *event) {
 
 void DemoLLAlogrithmWindow::setProcessBreakpoint(bool withSelectLine) {
 	QList<ipc::Breakpoint> breakpoints;
-	const char *names[] = {"RemoveLeftRecusion", "ExtractCommonPrefix",
-						   "ComputeFirstSet",	 "ComputeFollowSet",
-						   "ComputeSelectSet",	 "GenerateAutomaton"};
+	const char *names[] = {"RemoveLeftRecusion",  "ExtractCommonPrefix",
+						   "ComputeFirstSet",	  "ComputeFollowSet",
+						   "ComputeSelectSet",	  "GenerateLRAutomaton",
+						   "GenerateSLRAutomaton"};
 	for (auto name : names) {
 		breakpoints << ipc::Breakpoint{name, 0};
 		breakpoints << ipc::Breakpoint{name, -1};
@@ -144,7 +145,8 @@ void DemoLLAlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 		setupPointComputeFollowSet(point.line);
 	} else if (name == "ComputeSelectSet") {
 		setupPointComputeSelectSet(point.line);
-	} else if (name == "GenerateAutomaton") {
+	} else if (name == "GenerateLRAutomaton" ||
+			   name == "GenerateSLRAutomaton") {
 		setupPointGenerateAutomaton(point.line);
 	}
 }
