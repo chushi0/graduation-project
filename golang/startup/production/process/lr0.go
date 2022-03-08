@@ -130,18 +130,21 @@ func (ctx *LR0Context) ParseCode() {
 }
 
 func (ctx *LR0Context) Translate() {
+	ctx.bury("Translate", 0)
 	if !ctx.Grammer.Nonterminals.Contains(ctx.Grammer.StartNonterminal) {
 		ctx.shutdownPipeline(&LR0Result{
 			Code: LR0_Error_NoStartSymbol,
 		})
 	}
 	if len(ctx.Grammer.Productions[ctx.Grammer.StartNonterminal]) == 1 {
+		ctx.bury("Translate", -1)
 		return
 	}
 	nonterminal := ctx.Grammer.AddNewNonterminal(ctx.Grammer.StartNonterminal)
 	ctx.Grammer.AddNewProduction([]string{nonterminal, ctx.Grammer.StartNonterminal})
 	ctx.KeyVariables.Productions = append(ctx.KeyVariables.Productions, []string{nonterminal, ctx.Grammer.StartNonterminal})
 	ctx.Grammer.StartNonterminal = nonterminal
+	ctx.bury("Translate", -1)
 }
 
 func (ctx *LR0Context) ComputeFirstSet() {
@@ -301,6 +304,10 @@ func (ctx *LR0Context) ComputeFollowSet() {
 
 // 计算项目集闭包
 func (ctx *LR0Context) ComputeItemClosure() {
+	ctx.KeyVariables.LoopVariableI = -1
+	ctx.KeyVariables.LoopVariableJ = -1
+	ctx.KeyVariables.LoopVariableK = -1
+	ctx.bury("ComputeItemClosure", 0)
 	ctx.KeyVariables.ClosureMap = NewLr0ItemClosureMap()
 	// 开始符号
 	for i, prod := range ctx.KeyVariables.Productions {
@@ -312,12 +319,20 @@ func (ctx *LR0Context) ComputeItemClosure() {
 			break
 		}
 	}
+	ctx.bury("ComputeItemClosure", 1)
 	// 循环每个项目集
 	for i := 0; i < len(ctx.KeyVariables.ClosureMap.Closures); i++ {
+		ctx.KeyVariables.LoopVariableI = i
+		ctx.KeyVariables.LoopVariableJ = -1
+		ctx.KeyVariables.LoopVariableK = -1
+		ctx.bury("ComputeItemClosure", 2)
 		closure := ctx.KeyVariables.ClosureMap.Closures[i]
 		ctx.KeyVariables.ProcessedSymbol = set.NewStringSet()
 		// 循环项目集闭包中的每个项目
-		for _, item := range *closure {
+		for j, item := range *closure {
+			ctx.KeyVariables.LoopVariableJ = j
+			ctx.KeyVariables.LoopVariableK = -1
+			ctx.bury("ComputeItemClosure", 3)
 			prod := ctx.KeyVariables.Productions[item.Prod]
 			if item.Progress+1 >= len(prod) {
 				continue
@@ -347,9 +362,13 @@ func (ctx *LR0Context) ComputeItemClosure() {
 				To:     to,
 				Symbol: symbol,
 			})
+			ctx.KeyVariables.LoopVariableK = to
 			ctx.KeyVariables.ProcessedSymbol.Put(symbol)
+			ctx.bury("ComputeItemClosure", 4)
+			ctx.KeyVariables.LoopVariableK = -1
 		}
 	}
+	ctx.bury("ComputeItemClosure", -1)
 }
 
 // 产生项目集闭包

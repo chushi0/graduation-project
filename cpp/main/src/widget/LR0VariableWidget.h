@@ -30,6 +30,8 @@ private:
 	float x, y;
 	float lastMouseX, lastMouseY;
 	bool mousePressed;
+	// paintProductionList 安全宽度（右侧可渲染）
+	int productionSafeWidth;
 
 	QList<layout::Point> points;
 	QList<layout::Edge> edges;
@@ -41,6 +43,15 @@ private:
 		QFontMetrics *normalFontMetrics, *smallFontMetrics;
 	};
 
+	void paintComputeFirst(const PaintContext &ctx);
+	void paintComputeFollow(const PaintContext &ctx);
+	void paintComputeItemClosure(const PaintContext &ctx);
+	void paintLRGenerateAutomaton(const PaintContext &ctx);
+	void paintSLRGenerateAutomaton(const PaintContext &ctx);
+
+	void paintProductionOrder(const PaintContext &ctx);
+	void paintFirstTable(const PaintContext &ctx);
+	void paintFollowTable(const PaintContext &ctx);
 	void paintLR0ItemClosure(const PaintContext &ctx);
 
 	void computeItemLayout(const PaintContext &ctx,
@@ -50,4 +61,7 @@ private:
 								   ipc::LRItemClosure item,
 								   layout::Point &point);
 	int computeItemWidth(const PaintContext &ctx, ipc::LRItem item);
+	QRect computeProductionCellBounding(const PaintContext &ctx,
+										QStringList production, int index);
+	QString getItemString(const ipc::LRItem &item);
 };

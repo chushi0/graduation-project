@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>LL 自动机演示</string>
+   <string>LR(0)/SLR 自动机演示</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -23,13 +23,23 @@
       <widget class="QWidget" name="scrollAreaWidgetContents">
        <property name="geometry">
         <rect>
-         <x>0</x>
+         <x>-201</x>
          <y>0</y>
-         <width>718</width>
-         <height>69</height>
+         <width>902</width>
+         <height>64</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QCommandLinkButton" name="step2">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>转换增广文法</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QCommandLinkButton" name="step3">
           <property name="enabled">
@@ -47,6 +57,16 @@
           </property>
           <property name="text">
            <string>计算Follow集</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCommandLinkButton" name="step5">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>计算项目集闭包</string>
           </property>
          </widget>
         </item>

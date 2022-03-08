@@ -36,6 +36,14 @@ private:
 
 private:
 	void setProcessBreakpoint(bool withSelectLine = false);
+	void clearListItemBackground();
+	void setAlogContent(QStringList content);
+	void highlightListItem(int line);
 	void setupPoint(const ipc::Breakpoint &point);
+	void setupPointTranslate(int line);
+	void setupPointComputeFirstSet(int line);
+	void setupPointComputeFollowSet(int line);
+	void setupPointComputeItemClosure(int line);
+	void setupPointGenerateAutomaton(int line);
 	void appendBreakpoint(QList<ipc::Breakpoint> *breakpoints, int line);
 };
