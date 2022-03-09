@@ -87,8 +87,9 @@ void DemoLR0AlogrithmWindow::processCheck() {
 
 void DemoLR0AlogrithmWindow::setProcessBreakpoint(bool withSelectLine) {
 	QList<ipc::Breakpoint> breakpoints;
-	const char *names[] = {"Translate", "ComputeFirstSet", "ComputeFollowSet",
-						   "ComputeItemClosure", "GenerateAutomaton"};
+	const char *names[] = {
+		"Translate",		  "ComputeFirstSet",	  "ComputeFollowSet",
+		"ComputeItemClosure", "GenerateLR0Automaton", "GenerateSLRAutomaton"};
 	for (auto name : names) {
 		breakpoints << ipc::Breakpoint{name, 0};
 		breakpoints << ipc::Breakpoint{name, -1};
@@ -112,7 +113,8 @@ void DemoLR0AlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 		setupPointComputeFollowSet(point.line);
 	} else if (name == "ComputeItemClosure") {
 		setupPointComputeItemClosure(point.line);
-	} else if (name == "GenerateAutomaton") {
+	} else if (name == "GenerateLR0Automaton" ||
+			   name == "GenerateSLRAutomaton") {
 		setupPointGenerateAutomaton(point.line);
 	}
 }

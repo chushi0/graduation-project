@@ -32,6 +32,8 @@ private:
 	bool mousePressed;
 	// paintProductionList 安全宽度（右侧可渲染）
 	int productionSafeWidth;
+	// paintFollowTable 宽高
+	int followWidth, followHeight;
 	// paintLR0ItemClosure 宽高
 	int itemClosureWidth, itemClosureHeight;
 
@@ -54,7 +56,8 @@ private:
 	void paintProductionOrder(const PaintContext &ctx);
 	void paintFirstTable(const PaintContext &ctx);
 	void paintFollowTable(const PaintContext &ctx);
-	void paintLR0ItemClosure(const PaintContext &ctx);
+	void paintLR0ItemClosure(const PaintContext &ctx, int left, int top);
+	void paintAutomatonTable(const PaintContext &ctx, int left, int top);
 
 	void computeItemLayout(const PaintContext &ctx,
 						   QList<layout::Point> &points,

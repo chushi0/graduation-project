@@ -414,7 +414,28 @@ func (ctx *LR0Context) GenerateAutomaton() {
 			ctx.KeyVariables.GotoTable[i][nonterminal] = -1
 		}
 	}
+	ctx.sortNonterminals()
 
+	if ctx.SLR {
+		ctx.bury("GenerateSLRAutomaton", 0)
+		ctx.GenerateShiftAutomaton()
+		conflict = ctx.GenerateSLRReduceAutomaton()
+		ctx.bury("GenerateSLRAutomaton", -1)
+	} else {
+		ctx.bury("GenerateLR0Automaton", 0)
+		ctx.GenerateShiftAutomaton()
+		conflict = ctx.GenerateReduceAutomaton()
+		ctx.bury("GenerateLR0Automaton", -1)
+	}
+
+	if conflict {
+		ctx.shutdownPipeline(&LR0Result{
+			Code: LR0_Error_Conflict,
+		})
+	}
+}
+
+func (ctx *LR0Context) GenerateShiftAutomaton() {
 	for _, edge := range ctx.KeyVariables.ClosureMap.Edges {
 		from := edge.From
 		to := edge.To
@@ -425,76 +446,60 @@ func (ctx *LR0Context) GenerateAutomaton() {
 			ctx.KeyVariables.GotoTable[from][symbol] = to
 		}
 	}
-
-	if ctx.SLR {
-		conflict = ctx.GenerateSLRReduceAutomaton()
-	} else {
-		conflict = ctx.GenerateReduceAutomaton()
-	}
-
-	if conflict {
-		ctx.shutdownPipeline(&LR0Result{
-			Code: LR0_Error_Conflict,
-		})
-	}
 }
 
 func (ctx *LR0Context) GenerateSLRReduceAutomaton() bool {
-	ctx.bury("GenerateSLRAutomaton", 0)
 	conflict := false
 	for i, closure := range ctx.KeyVariables.ClosureMap.Closures {
 		for _, item := range *closure {
 			prod := ctx.KeyVariables.Productions[item.Prod]
 			if len(prod) == item.Progress+1 {
 				if prod[0] == ctx.Grammer.StartNonterminal {
-					ctx.SetAutomatonReduce(i, "$", "acc")
+					conflict = !ctx.SetAutomatonReduce(i, "$", "acc") || conflict
 				} else {
 					reduceText := fmt.Sprintf("r%d", item.Prod)
 					for terminal := range ctx.KeyVariables.FollowSet[prod[0]] {
-						ctx.SetAutomatonReduce(i, terminal, reduceText)
+						conflict = !ctx.SetAutomatonReduce(i, terminal, reduceText) || conflict
 					}
 				}
 			}
 		}
 	}
-	ctx.bury("GenerateSLRAutomaton", -1)
 	return conflict
 }
 
 func (ctx *LR0Context) GenerateReduceAutomaton() bool {
-	ctx.bury("GenerateLR0Automaton", 0)
 	conflict := false
 	for i, closure := range ctx.KeyVariables.ClosureMap.Closures {
 		for _, item := range *closure {
 			prod := ctx.KeyVariables.Productions[item.Prod]
 			if len(prod) == item.Progress+1 {
 				if prod[0] == ctx.Grammer.StartNonterminal {
-					ctx.SetAutomatonReduce(i, "$", "acc")
+					conflict = !ctx.SetAutomatonReduce(i, "$", "acc") || conflict
 				} else {
 					reduceText := fmt.Sprintf("r%d", item.Prod)
-					ctx.SetAutomatonReduce(i, "$", reduceText)
+					conflict = !ctx.SetAutomatonReduce(i, "$", reduceText) || conflict
 					for terminal := range ctx.Grammer.Terminals {
-						ctx.SetAutomatonReduce(i, terminal, reduceText)
+						conflict = !ctx.SetAutomatonReduce(i, terminal, reduceText) || conflict
 					}
 				}
 			}
 		}
 	}
-	ctx.bury("GenerateLR0Automaton", -1)
 	return conflict
 }
 
-func (ctx *LR0Context) SetAutomatonReduce(closure int, terminal string, reduce string) {
+func (ctx *LR0Context) SetAutomatonReduce(closure int, terminal string, reduce string) bool {
 	if ctx.KeyVariables.ActionTable[closure][terminal] != "" {
 		switch ctx.KeyVariables.ActionTable[closure][terminal][0] {
-		case 'r':
-		case 'a':
+		case 'r', 'a':
 			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ReduceReduce
 		case 's':
 			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ShiftReduce
 		}
-		return
+		return false
 	}
 
 	ctx.KeyVariables.ActionTable[closure][terminal] = reduce
+	return true
 }
