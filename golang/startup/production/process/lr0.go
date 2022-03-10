@@ -368,6 +368,9 @@ func (ctx *LR0Context) ComputeItemClosure() {
 			ctx.KeyVariables.LoopVariableK = -1
 		}
 	}
+	ctx.KeyVariables.LoopVariableI = -1
+	ctx.KeyVariables.LoopVariableJ = -1
+	ctx.KeyVariables.LoopVariableK = -1
 	ctx.bury("ComputeItemClosure", -1)
 }
 
