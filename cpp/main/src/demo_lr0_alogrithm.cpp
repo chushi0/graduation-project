@@ -94,10 +94,12 @@ void DemoLR0AlogrithmWindow::setProcessBreakpoint(bool withSelectLine) {
 		breakpoints << ipc::Breakpoint{name, 0};
 		breakpoints << ipc::Breakpoint{name, -1};
 	}
-	auto indexes = ui->listWidget->selectionModel()->selectedIndexes();
-	for (QModelIndex index : indexes) {
-		int i = index.row();
-		appendBreakpoint(&breakpoints, i);
+	if (withSelectLine) {
+		auto indexes = ui->listWidget->selectionModel()->selectedIndexes();
+		for (QModelIndex index : indexes) {
+			int i = index.row();
+			appendBreakpoint(&breakpoints, i);
+		}
 	}
 	ipc::LR0ProcessSetBreakpoints(processId, breakpoints);
 }
@@ -335,6 +337,96 @@ void DemoLR0AlogrithmWindow::setupPointGenerateAutomaton(int line) {
 
 void DemoLR0AlogrithmWindow::appendBreakpoint(
 	QList<ipc::Breakpoint> *breakpoints, int line) {
+	if (currentFunction == "ComputeFirstSet") {
+		appendBreakpointComputeFirstSet(breakpoints, line);
+	} else if (currentFunction == "ComputeFollowSet") {
+		appendBreakpointComputeFollowSet(breakpoints, line);
+	} else if (currentFunction == "ComputeItemClosure") {
+		appendBreakpointComputeItemClosure(breakpoints, line);
+	}
+}
+
+void DemoLR0AlogrithmWindow::appendBreakpointComputeFirstSet(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+	switch (line) {
+		case 1:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 2};
+			break;
+		case 2:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 3};
+			break;
+		case 3:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 4};
+			break;
+		case 4:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 5};
+			break;
+		case 5:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 6};
+			break;
+		case 6:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 7};
+			break;
+		case 7:
+			*breakpoints << ipc::Breakpoint{"ComputeFirstSet", 10};
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLR0AlogrithmWindow::appendBreakpointComputeFollowSet(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+	switch (line) {
+		case 1:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 1};
+			break;
+		case 2:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 2};
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 4};
+			break;
+		case 3:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 5};
+			break;
+		case 4:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 8};
+			break;
+		case 5:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 6};
+			break;
+		case 6:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 7};
+			break;
+		case 7:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 9};
+			break;
+		case 8:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 10};
+			break;
+		case 9:
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 11};
+			*breakpoints << ipc::Breakpoint{"ComputeFollowSet", 12};
+			break;
+		default:
+			break;
+	}
+}
+
+void DemoLR0AlogrithmWindow::appendBreakpointComputeItemClosure(
+	QList<ipc::Breakpoint> *breakpoints, int line) {
+	switch (line) {
+		case 1:
+			*breakpoints << ipc::Breakpoint{"ComputeItemClosure", 1};
+			break;
+		case 2:
+			*breakpoints << ipc::Breakpoint{"ComputeItemClosure", 2};
+			break;
+		case 3:
+			*breakpoints << ipc::Breakpoint{"ComputeItemClosure", 3};
+			break;
+		default:
+			break;
+	}
 }
 
 void DemoLR0AlogrithmWindow::runButtonTrigger() {

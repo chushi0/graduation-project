@@ -46,4 +46,11 @@ private:
 	void setupPointComputeItemClosure(int line);
 	void setupPointGenerateAutomaton(int line);
 	void appendBreakpoint(QList<ipc::Breakpoint> *breakpoints, int line);
+
+	void appendBreakpointComputeFirstSet(QList<ipc::Breakpoint> *breakpoints,
+										 int line);
+	void appendBreakpointComputeFollowSet(QList<ipc::Breakpoint> *breakpoints,
+										  int line);
+	void appendBreakpointComputeItemClosure(QList<ipc::Breakpoint> *breakpoints,
+											int line);
 };

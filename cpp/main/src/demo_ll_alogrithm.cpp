@@ -51,10 +51,12 @@ void DemoLLAlogrithmWindow::setProcessBreakpoint(bool withSelectLine) {
 		breakpoints << ipc::Breakpoint{name, 0};
 		breakpoints << ipc::Breakpoint{name, -1};
 	}
-	auto indexes = ui->listWidget->selectionModel()->selectedIndexes();
-	for (QModelIndex index : indexes) {
-		int i = index.row();
-		appendBreakpoint(&breakpoints, i);
+	if (withSelectLine) {
+		auto indexes = ui->listWidget->selectionModel()->selectedIndexes();
+		for (QModelIndex index : indexes) {
+			int i = index.row();
+			appendBreakpoint(&breakpoints, i);
+		}
 	}
 	ipc::LLProcessSetBreakpoints(processId, breakpoints);
 }
