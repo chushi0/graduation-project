@@ -1,6 +1,7 @@
 package process
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/chushi0/graduation_project/golang/startup/debug"
@@ -304,4 +305,66 @@ func (ctx *LR1Context) subFirst(prod []string, start int, lookahead string) set.
 	return res
 }
 
-func (ctx *LR1Context) GenerateAutomaton() {}
+func (ctx *LR1Context) GenerateAutomaton() {
+	conflict := false
+	itemCount := len(ctx.KeyVariables.ClosureMap.Closures)
+	ctx.KeyVariables.ActionTable = make([]map[string]string, itemCount)
+	ctx.KeyVariables.GotoTable = make([]map[string]int, itemCount)
+	for i := 0; i < itemCount; i++ {
+		ctx.KeyVariables.ActionTable[i] = make(map[string]string)
+		ctx.KeyVariables.GotoTable[i] = make(map[string]int)
+		ctx.KeyVariables.ActionTable[i]["$"] = ""
+		for terminal := range ctx.Grammer.Terminals {
+			ctx.KeyVariables.ActionTable[i][terminal] = ""
+		}
+		for nonterminal := range ctx.Grammer.Nonterminals {
+			ctx.KeyVariables.GotoTable[i][nonterminal] = -1
+		}
+	}
+	ctx.sortNonterminals()
+
+	for _, edge := range ctx.KeyVariables.ClosureMap.Edges {
+		from := edge.From
+		to := edge.To
+		symbol := edge.Symbol
+		if ctx.Grammer.Terminals.Contains(symbol) {
+			ctx.KeyVariables.ActionTable[from][symbol] = fmt.Sprintf("s%d", to)
+		} else {
+			ctx.KeyVariables.GotoTable[from][symbol] = to
+		}
+	}
+
+	for i, closure := range ctx.KeyVariables.ClosureMap.Closures {
+		for _, item := range *closure {
+			prod := ctx.KeyVariables.Productions[item.Prod]
+			if len(prod) == item.Progress+1 {
+				if prod[0] == ctx.Grammer.StartNonterminal {
+					conflict = !ctx.SetAutomatonReduce(i, item.Lookahead, "acc") || conflict
+				} else {
+					conflict = !ctx.SetAutomatonReduce(i, item.Lookahead, fmt.Sprintf("r%d", item.Prod)) || conflict
+				}
+			}
+		}
+	}
+
+	if conflict {
+		ctx.shutdownPipeline(&LR1Result{
+			Code: LR1_Error_Conflict,
+		})
+	}
+}
+
+func (ctx *LR1Context) SetAutomatonReduce(closure int, terminal string, reduce string) bool {
+	if ctx.KeyVariables.ActionTable[closure][terminal] != "" {
+		switch ctx.KeyVariables.ActionTable[closure][terminal][0] {
+		case 'r', 'a':
+			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ReduceReduce
+		case 's':
+			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ShiftReduce
+		}
+		return false
+	}
+
+	ctx.KeyVariables.ActionTable[closure][terminal] = reduce
+	return true
+}
