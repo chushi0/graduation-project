@@ -122,6 +122,30 @@ void ipc::parseLR0ExitResult(QJsonObject object, LR0ExitResult *out) {
 	parseLR0Variables(object["variables"].toObject(), &out->variable);
 }
 
+void ipc::parseLR1Variables(QJsonObject object, LR1BreakpointVariables *out) {
+	parseArrayString(object["terminals"].toArray(), &out->terminals);
+	parseArrayArrayString(object["productions"].toArray(), &out->productions);
+	out->loopVariableI = object["loop_variable_i"].toInt();
+	out->loopVariableJ = object["loop_variable_j"].toInt();
+	out->loopVariableK = object["loop_variable_k"].toInt();
+	out->modifiedFlag = object["modified_flag"].toBool();
+	parseArrayString(object["nonterminal_orders"].toArray(),
+					 &out->nonterminalOrders);
+	parseArrayString(object["process_symbol"].toArray(), &out->processedSymbol);
+	out->currentProcessSymbol = object["current_symbol"].toString();
+	parseHashStringArrayString(object["first"].toObject(), &out->firstSet);
+	parseLRItemClosureMap(object["closure_map"].toObject(), &out->closureMap);
+	parseArrayLRItem(object["current_closure"].toArray(), &out->currentClosure);
+	parseArrayHashStringString(object["action_table"].toArray(),
+							   &out->actionTable);
+	parseArrayHashStringInt(object["goto_table"].toArray(), &out->gotoTable);
+}
+
+void ipc::parseLR1ExitResult(QJsonObject object, LR1ExitResult *out) {
+	out->code = object["code"].toInt();
+	parseLR1Variables(object["variables"].toObject(), &out->variable);
+}
+
 void ipc::parseReplaceProduction(QJsonObject object, ReplaceProduction *out) {
 	parseArrayString(object["original"].toArray(), &out->original);
 	parseArrayString(object["replace"].toArray(), &out->replace);
@@ -130,6 +154,7 @@ void ipc::parseReplaceProduction(QJsonObject object, ReplaceProduction *out) {
 void ipc::parseLRItem(QJsonObject object, LRItem *out) {
 	out->production = object["prod"].toInt();
 	out->progress = object["progress"].toInt();
+	out->lookahead = object["lookahead"].toString();
 }
 
 void ipc::parseLRItemClosureMapEdge(QJsonObject object,

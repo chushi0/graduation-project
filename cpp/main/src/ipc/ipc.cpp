@@ -221,3 +221,89 @@ bool ipc::LR0ProcessExit(QString id, LR0ExitResult *exitResult) {
 	}
 	return true;
 }
+
+QString ipc::LR1ProcessRequest(QString code, bool lalr) {
+	QJsonObject data;
+	data["code"] = code;
+	data["lalr"] = lalr;
+	QJsonObject wrap;
+	wrap["action"] = "lr1_process_request";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
+	return resp.Data["id"].toString();
+}
+
+void ipc::LR1ProcessSwitchMode(QString id, int mode) {
+	QJsonObject data;
+	data["id"] = id;
+	data["mode"] = mode;
+	QJsonObject wrap;
+	wrap["action"] = "lr1_process_switchmode";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
+}
+
+void ipc::LR1ProcessRelease(QString id) {
+	QJsonObject data;
+	data["id"] = id;
+	QJsonObject wrap;
+	wrap["action"] = "lr1_process_release";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
+}
+
+void ipc::LR1ProcessSetBreakpoints(QString id, QList<Breakpoint> breakpoints) {
+	QJsonArray array;
+	for (auto &breakpoint : breakpoints) {
+		QJsonObject o;
+		o["name"] = breakpoint.name;
+		o["line"] = breakpoint.line;
+		array.append(o);
+	}
+	QJsonObject data;
+	data["id"] = id;
+	data["breakpoints"] = array;
+	QJsonObject wrap;
+	wrap["action"] = "lr1_process_setbreakpoints";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
+}
+
+bool ipc::LR1ProcessGetVariables(QString id, LR1BreakpointVariables *variables,
+								 Breakpoint *point) {
+	QJsonObject data;
+	data["id"] = id;
+	QJsonObject wrap;
+	wrap["action"] = "lr0_process_variables";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
+	if (resp.ResponseCode == 1003) {
+		return false;
+	}
+	ipc::parseLR1Variables(resp.Data["var"].toObject(), variables);
+	point->name = resp.Data["point"].toObject()["name"].toString();
+	point->line = resp.Data["point"].toObject()["line"].toInt();
+	return true;
+}
+
+bool ipc::LR1ProcessExit(QString id, LR1ExitResult *exitResult) {
+	QJsonObject data;
+	data["id"] = id;
+	QJsonObject wrap;
+	wrap["action"] = "lr0_process_exit";
+	wrap["data"] = data;
+	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
+	auto resp = RpcRequest(req);
+	if (resp.ResponseCode == 1004) {
+		return false;
+	}
+	if (exitResult != nullptr) {
+		parseLR1ExitResult(resp.Data, exitResult);
+	}
+	return true;
+}

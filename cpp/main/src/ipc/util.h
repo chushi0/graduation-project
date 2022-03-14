@@ -19,6 +19,8 @@ namespace ipc {
 	void parseLLExitResult(QJsonObject object, LLExitResult *out);
 	void parseLR0Variables(QJsonObject object, LR0BreakpointVariables *out);
 	void parseLR0ExitResult(QJsonObject object, LR0ExitResult *out);
+	void parseLR1Variables(QJsonObject object, LR1BreakpointVariables *out);
+	void parseLR1ExitResult(QJsonObject object, LR1ExitResult *out);
 
 	void parseReplaceProduction(QJsonObject object, ReplaceProduction *out);
 	def_array_value(ReplaceProduction, ReplaceProduction);

@@ -2,6 +2,7 @@
 #include "Qsci/qscilexercpp.h"
 #include "demo_ll_alogrithm.h"
 #include "demo_lr0_alogrithm.h"
+#include "demo_lr1_alogrithm.h"
 #include "ipc/base.h"
 #include "ipc/ipc.h"
 #include <QCloseEvent>
@@ -49,6 +50,10 @@ MainWindow::MainWindow(QWidget *parent)
 			&MainWindow::actionAlogLR0);
 	connect(ui->actionSLR, &QAction::triggered, this,
 			&MainWindow::actionAlogSLR);
+	connect(ui->actionLR_1, &QAction::triggered, this,
+			&MainWindow::actionAlogLR1);
+	connect(ui->actionLALR, &QAction::triggered, this,
+			&MainWindow::actionAlogLALR);
 }
 
 MainWindow::~MainWindow() {
@@ -103,6 +108,16 @@ void MainWindow::actionAlogLR0() {
 
 void MainWindow::actionAlogSLR() {
 	auto w = new DemoLR0AlogrithmWindow(ui->codeView->text(), true);
+	w->show();
+}
+
+void MainWindow::actionAlogLR1() {
+	auto w = new DemoLR1AlogrithmWindow(ui->codeView->text(), false);
+	w->show();
+}
+
+void MainWindow::actionAlogLALR() {
+	auto w = new DemoLR1AlogrithmWindow(ui->codeView->text(), true);
 	w->show();
 }
 

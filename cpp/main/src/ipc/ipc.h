@@ -25,4 +25,12 @@ namespace ipc {
 	bool LR0ProcessGetVariables(QString id, LR0BreakpointVariables *variables,
 								Breakpoint *point);
 	bool LR0ProcessExit(QString id, LR0ExitResult *exitResult);
+
+	QString LR1ProcessRequest(QString code, bool lalr);
+	void LR1ProcessSwitchMode(QString id, int mode);
+	void LR1ProcessRelease(QString id);
+	void LR1ProcessSetBreakpoints(QString id, QList<Breakpoint> breakpoints);
+	bool LR1ProcessGetVariables(QString id, LR1BreakpointVariables *variables,
+								Breakpoint *point);
+	bool LR1ProcessExit(QString id, LR1ExitResult *exitResult);
 } // namespace ipc

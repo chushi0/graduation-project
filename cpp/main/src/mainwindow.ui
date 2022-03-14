@@ -125,6 +125,8 @@
     <addaction name="actionLL_2"/>
     <addaction name="actionLR_0"/>
     <addaction name="actionSLR"/>
+    <addaction name="actionLR_1"/>
+    <addaction name="actionLALR"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menubianji"/>
@@ -284,6 +286,16 @@
   <action name="actionSLR">
    <property name="text">
     <string>SLR</string>
+   </property>
+  </action>
+  <action name="actionLR_1">
+   <property name="text">
+    <string>LR(1)</string>
+   </property>
+  </action>
+  <action name="actionLALR">
+   <property name="text">
+    <string>LALR</string>
    </property>
   </action>
  </widget>

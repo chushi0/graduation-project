@@ -23,6 +23,8 @@ private slots:
 	void actionAlogLLWithoutTranslate();
 	void actionAlogLR0();
 	void actionAlogSLR();
+	void actionAlogLR1();
+	void actionAlogLALR();
 	void receiveProduction();
 
 private:
