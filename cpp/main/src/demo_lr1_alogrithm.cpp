@@ -113,8 +113,7 @@ void DemoLR1AlogrithmWindow::setupPoint(const ipc::Breakpoint &point) {
 		setupPointComputeFirstSet(point.line);
 	} else if (name == "ComputeItemClosure") {
 		setupPointComputeItemClosure(point.line);
-	} else if (name == "GenerateLR0Automaton" ||
-			   name == "GenerateSLRAutomaton") {
+	} else if (name == "GenerateAutomaton") {
 		setupPointGenerateAutomaton(point.line);
 	}
 }
@@ -326,7 +325,7 @@ void DemoLR1AlogrithmWindow::runButtonTrigger() {
 		return;
 	}
 	setProcessBreakpoint();
-	ipc::LR0ProcessSwitchMode(processId, ipc::LLProcessModeRun);
+	ipc::LR1ProcessSwitchMode(processId, ipc::LLProcessModeRun);
 	status = Run;
 	processCheck();
 }
@@ -335,7 +334,7 @@ void DemoLR1AlogrithmWindow::stepButtonTrigger() {
 	if (status != Pause || processId.isEmpty()) {
 		return;
 	}
-	ipc::LR0ProcessSwitchMode(processId, ipc::LLProcessModePause);
+	ipc::LR1ProcessSwitchMode(processId, ipc::LLProcessModePause);
 	status = Run;
 	processCheck();
 }
@@ -345,7 +344,7 @@ void DemoLR1AlogrithmWindow::runToCursorTrigger() {
 		return;
 	}
 	setProcessBreakpoint(true);
-	ipc::LR0ProcessSwitchMode(processId, ipc::LLProcessModeRun);
+	ipc::LR1ProcessSwitchMode(processId, ipc::LLProcessModeRun);
 	status = Run;
 	processCheck();
 }

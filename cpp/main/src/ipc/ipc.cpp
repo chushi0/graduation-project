@@ -278,7 +278,7 @@ bool ipc::LR1ProcessGetVariables(QString id, LR1BreakpointVariables *variables,
 	QJsonObject data;
 	data["id"] = id;
 	QJsonObject wrap;
-	wrap["action"] = "lr0_process_variables";
+	wrap["action"] = "lr1_process_variables";
 	wrap["data"] = data;
 	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
 	auto resp = RpcRequest(req);
@@ -295,7 +295,7 @@ bool ipc::LR1ProcessExit(QString id, LR1ExitResult *exitResult) {
 	QJsonObject data;
 	data["id"] = id;
 	QJsonObject wrap;
-	wrap["action"] = "lr0_process_exit";
+	wrap["action"] = "lr1_process_exit";
 	wrap["data"] = data;
 	auto req = QJsonDocument(wrap).toJson(QJsonDocument::Compact);
 	auto resp = RpcRequest(req);

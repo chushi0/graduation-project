@@ -68,7 +68,7 @@ void LR1VariableWidget::paintEvent(QPaintEvent *event) {
 		paintComputeFirst(ctx);
 	} else if (point.name == "ComputeItemClosure") {
 		paintComputeItemClosure(ctx);
-	} else if (point.name == "GenerateLR1Automaton") {
+	} else if (point.name == "GenerateAutomaton") {
 		paintLRGenerateAutomaton(ctx);
 	}
 	painter.restore();
@@ -453,5 +453,5 @@ QString LR1VariableWidget::getItemString(const ipc::LRItem &item) {
 	if (production.size() - 1 == item.progress) {
 		prod += " ·";
 	}
-	return prod;
+	return prod + " , " + item.lookahead;
 }
