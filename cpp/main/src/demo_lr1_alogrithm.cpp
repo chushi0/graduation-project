@@ -87,9 +87,8 @@ void DemoLR1AlogrithmWindow::processCheck() {
 
 void DemoLR1AlogrithmWindow::setProcessBreakpoint(bool withSelectLine) {
 	QList<ipc::Breakpoint> breakpoints;
-	const char *names[] = {
-		"Translate",		  "ComputeFirstSet",	  "ComputeFollowSet",
-		"ComputeItemClosure", "GenerateLR0Automaton", "GenerateSLRAutomaton"};
+	const char *names[] = {"Translate", "ComputeFirstSet", "ComputeFollowSet",
+						   "ComputeItemClosure", "GenerateAutomaton"};
 	for (auto name : names) {
 		breakpoints << ipc::Breakpoint{name, 0};
 		breakpoints << ipc::Breakpoint{name, -1};
