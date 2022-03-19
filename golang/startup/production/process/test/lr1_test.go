@@ -34,6 +34,25 @@ func TestLR1ItemClosure(t *testing.T) {
 	ioutil.WriteFile("test.json", json, 0660)
 }
 
+func TestLALR(t *testing.T) {
+	ctx := process.NewLR1Context()
+	ctx.Code = `
+	S := S0
+	S0 := L = R
+	S0 := R
+	L := * R
+	L := id
+	R := L
+	`
+	ctx.LALR = true
+	entry := ctx.CreateLR1ProcessEntry()
+	dbg := debug.NewDebugContext()
+	dbg.SwitchRunMode(debug.RunMode_Run)
+	entry(dbg)
+	json, _ := json.Marshal(ctx.KeyVariables)
+	ioutil.WriteFile("test.json", json, 0660)
+}
+
 func TestLR1ItemClosureFromFile(t *testing.T) {
 	code, _ := ioutil.ReadFile("input.txt")
 	ctx := process.NewLR1Context()

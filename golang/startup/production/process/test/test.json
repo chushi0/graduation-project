@@ -1,0 +1,474 @@
+{
+    "productions": [
+        [
+            "L",
+            "*",
+            "R"
+        ],
+        [
+            "L",
+            "id"
+        ],
+        [
+            "R",
+            "L"
+        ],
+        [
+            "S",
+            "S0"
+        ],
+        [
+            "S0",
+            "L",
+            "=",
+            "R"
+        ],
+        [
+            "S0",
+            "R"
+        ]
+    ],
+    "loop_variable_i": 13,
+    "loop_variable_j": 0,
+    "loop_variable_k": -1,
+    "modified_flag": false,
+    "terminals": [
+        "=",
+        "*",
+        "id"
+    ],
+    "nonterminal_orders": [
+        "L",
+        "R",
+        "S",
+        "S0"
+    ],
+    "first": {
+        "L": [
+            "*",
+            "id"
+        ],
+        "R": [
+            "*",
+            "id"
+        ],
+        "S": [
+            "*",
+            "id"
+        ],
+        "S0": [
+            "*",
+            "id"
+        ]
+    },
+    "process_symbol": [],
+    "current_symbol": "id",
+    "closure_map": {
+        "closures": [
+            [
+                {
+                    "prod": 3,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 4,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 5,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 0,
+                    "progress": 0,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 1,
+                    "progress": 0,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 2,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 0,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 1,
+                    "progress": 0,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 3,
+                    "progress": 1,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 4,
+                    "progress": 1,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 2,
+                    "progress": 1,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 5,
+                    "progress": 1,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 0,
+                    "progress": 1,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 0,
+                    "progress": 1,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 2,
+                    "progress": 0,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 2,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 0,
+                    "progress": 0,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 1,
+                    "progress": 0,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 0,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 1,
+                    "progress": 0,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 1,
+                    "progress": 1,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 1,
+                    "progress": 1,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 4,
+                    "progress": 2,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 2,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 0,
+                    "progress": 0,
+                    "lookahead": "$"
+                },
+                {
+                    "prod": 1,
+                    "progress": 0,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 0,
+                    "progress": 2,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 0,
+                    "progress": 2,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 2,
+                    "progress": 1,
+                    "lookahead": "="
+                },
+                {
+                    "prod": 2,
+                    "progress": 1,
+                    "lookahead": "$"
+                }
+            ],
+            [
+                {
+                    "prod": 4,
+                    "progress": 3,
+                    "lookahead": "$"
+                }
+            ]
+        ],
+        "edges": [
+            {
+                "from": 0,
+                "to": 1,
+                "symbol": "S0"
+            },
+            {
+                "from": 0,
+                "to": 2,
+                "symbol": "L"
+            },
+            {
+                "from": 0,
+                "to": 3,
+                "symbol": "R"
+            },
+            {
+                "from": 0,
+                "to": 4,
+                "symbol": "*"
+            },
+            {
+                "from": 0,
+                "to": 5,
+                "symbol": "id"
+            },
+            {
+                "from": 2,
+                "to": 6,
+                "symbol": "="
+            },
+            {
+                "from": 4,
+                "to": 7,
+                "symbol": "R"
+            },
+            {
+                "from": 4,
+                "to": 8,
+                "symbol": "L"
+            },
+            {
+                "from": 4,
+                "to": 4,
+                "symbol": "*"
+            },
+            {
+                "from": 4,
+                "to": 5,
+                "symbol": "id"
+            },
+            {
+                "from": 6,
+                "to": 9,
+                "symbol": "R"
+            },
+            {
+                "from": 6,
+                "to": 8,
+                "symbol": "L"
+            },
+            {
+                "from": 6,
+                "to": 4,
+                "symbol": "*"
+            },
+            {
+                "from": 6,
+                "to": 5,
+                "symbol": "id"
+            },
+            {
+                "from": 4,
+                "to": 7,
+                "symbol": "R"
+            },
+            {
+                "from": 4,
+                "to": 8,
+                "symbol": "L"
+            },
+            {
+                "from": 4,
+                "to": 4,
+                "symbol": "*"
+            },
+            {
+                "from": 4,
+                "to": 5,
+                "symbol": "id"
+            }
+        ]
+    },
+    "current_closure": [
+        {
+            "prod": 1,
+            "progress": 1,
+            "lookahead": "$"
+        }
+    ],
+    "lalr_drop_closures": {
+        "10": true,
+        "11": true,
+        "12": true,
+        "13": true
+    },
+    "action_table": [
+        {
+            "$": "",
+            "*": "s4",
+            "=": "",
+            "id": "s5"
+        },
+        {
+            "$": "acc",
+            "*": "",
+            "=": "",
+            "id": ""
+        },
+        {
+            "$": "r2",
+            "*": "",
+            "=": "s6",
+            "id": ""
+        },
+        {
+            "$": "r5",
+            "*": "",
+            "=": "",
+            "id": ""
+        },
+        {
+            "$": "",
+            "*": "s4",
+            "=": "",
+            "id": "s5"
+        },
+        {
+            "$": "r1",
+            "*": "",
+            "=": "r1",
+            "id": ""
+        },
+        {
+            "$": "",
+            "*": "s4",
+            "=": "",
+            "id": "s5"
+        },
+        {
+            "$": "r0",
+            "*": "",
+            "=": "r0",
+            "id": ""
+        },
+        {
+            "$": "r2",
+            "*": "",
+            "=": "r2",
+            "id": ""
+        },
+        {
+            "$": "r4",
+            "*": "",
+            "=": "",
+            "id": ""
+        }
+    ],
+    "goto_table": [
+        {
+            "L": 2,
+            "R": 3,
+            "S": -1,
+            "S0": 1
+        },
+        {
+            "L": -1,
+            "R": -1,
+            "S": -1,
+            "S0": -1
+        },
+        {
+            "L": -1,
+            "R": -1,
+            "S": -1,
+            "S0": -1
+        },
+        {
+            "L": -1,
+            "R": -1,
+            "S": -1,
+            "S0": -1
+        },
+        {
+            "L": 8,
+            "R": 7,
+            "S": -1,
+            "S0": -1
+        },
+        {
+            "L": -1,
+            "R": -1,
+            "S": -1,
+            "S0": -1
+        },
+        {
+            "L": 8,
+            "R": 9,
+            "S": -1,
+            "S0": -1
+        },
+        {
+            "L": -1,
+            "R": -1,
+            "S": -1,
+            "S0": -1
+        },
+        {
+            "L": -1,
+            "R": -1,
+            "S": -1,
+            "S0": -1
+        },
+        {
+            "L": -1,
+            "R": -1,
+            "S": -1,
+            "S0": -1
+        }
+    ]
+}

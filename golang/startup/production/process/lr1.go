@@ -31,8 +31,9 @@ type LR1Variables struct {
 	ProcessedSymbol      set.StringSet `json:"process_symbol"`
 	CurrentProcessSymbol string        `json:"current_symbol"`
 
-	ClosureMap     *LR1ItemClosureMap `json:"closure_map"`
-	CurrentClosure *LR1ItemClosure    `json:"current_closure"`
+	ClosureMap       *LR1ItemClosureMap `json:"closure_map"`
+	CurrentClosure   *LR1ItemClosure    `json:"current_closure"`
+	LALRDropClosures set.IntSet         `json:"lalr_drop_closures"`
 
 	ActionTable []map[string]string `json:"action_table"`
 	GotoTable   []map[string]int    `json:"goto_table"`
@@ -89,6 +90,12 @@ func (ctx *LR1Context) RunPipeline() {
 	ctx.Translate()
 	ctx.ComputeFirstSet()
 	ctx.ComputeItemClosure()
+	if ctx.LALR {
+		// LALR：在 LR(1) 基础上合并相似的项目集闭包
+		ctx.MergeItemClosure()
+		// 清除多余的闭包
+		ctx.ClearUnusedItemClosure()
+	}
 	ctx.GenerateAutomaton()
 }
 
@@ -317,6 +324,107 @@ func (ctx *LR1Context) subFirst(prod []string, start int, lookahead string) set.
 	}
 	res.Put(lookahead)
 	return res
+}
+
+func (ctx *LR1Context) MergeItemClosure() {
+	ctx.KeyVariables.LALRDropClosures = set.NewIntSet()
+	for i := range ctx.KeyVariables.ClosureMap.Closures {
+		if ctx.KeyVariables.LALRDropClosures.Contains(i) {
+			continue
+		}
+		// 寻找同心项目集
+		sameClosures := set.NewIntSet()
+		for j := i + 1; j < len(ctx.KeyVariables.ClosureMap.Closures); j++ {
+			if ctx.isClosureSame(i, j) {
+				sameClosures.Put(j)
+			}
+		}
+		// 合并项目集
+		for ano := range sameClosures {
+			ctx.mergeItemClosure(i, ano)
+			ctx.KeyVariables.LALRDropClosures.Put(ano)
+			for _, edge := range ctx.KeyVariables.ClosureMap.Edges {
+				if edge.From == ano {
+					edge.From = i
+				}
+				if edge.To == ano {
+					edge.To = i
+				}
+			}
+		}
+		// 清除重复的边
+		for i := 0; i < len(ctx.KeyVariables.ClosureMap.Edges); i++ {
+			for j := i + 1; j < len(ctx.KeyVariables.ClosureMap.Edges); j++ {
+				if ctx.KeyVariables.ClosureMap.Edges[i] == ctx.KeyVariables.ClosureMap.Edges[j] {
+					ctx.KeyVariables.ClosureMap.Edges = append(ctx.KeyVariables.ClosureMap.Edges[:j], ctx.KeyVariables.ClosureMap.Edges[j+1:]...)
+				}
+			}
+		}
+	}
+}
+
+func (ctx *LR1Context) isClosureSame(i, j int) bool {
+	return ctx.isClosureContains(i, j) && ctx.isClosureContains(j, i)
+}
+
+func (ctx *LR1Context) isClosureContains(i, j int) bool {
+	for _, item := range *ctx.KeyVariables.ClosureMap.Closures[i] {
+		found := false
+		for _, anoitem := range *ctx.KeyVariables.ClosureMap.Closures[j] {
+			if item.Prod == anoitem.Prod && item.Progress == anoitem.Progress {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+func (ctx *LR1Context) mergeItemClosure(dst, src int) {
+	for _, item := range *ctx.KeyVariables.ClosureMap.Closures[src] {
+		found := false
+		for _, anoitem := range *ctx.KeyVariables.ClosureMap.Closures[dst] {
+			if item.Prod == anoitem.Prod && item.Progress == anoitem.Progress {
+				found = true
+				break
+			}
+		}
+		if !found {
+			ctx.KeyVariables.ClosureMap.Closures[dst].AddItem(*item)
+		}
+	}
+}
+
+func (ctx *LR1Context) ClearUnusedItemClosure() {
+	unusedItemClosureId := make([]int, 0, len(ctx.KeyVariables.LALRDropClosures))
+	for item := range ctx.KeyVariables.LALRDropClosures {
+		unusedItemClosureId = append(unusedItemClosureId, item)
+	}
+	sort.Ints(unusedItemClosureId)
+	for i := len(unusedItemClosureId) - 1; i >= 0; i-- {
+		ctx.removeItemClosure(unusedItemClosureId[i])
+	}
+}
+
+func (ctx *LR1Context) removeItemClosure(item int) {
+	ctx.KeyVariables.ClosureMap.Closures = append(ctx.KeyVariables.ClosureMap.Closures[:item], ctx.KeyVariables.ClosureMap.Closures[item+1:]...)
+	for i := 0; i < len(ctx.KeyVariables.ClosureMap.Edges); {
+		edge := ctx.KeyVariables.ClosureMap.Edges[i]
+		if edge.From == item || edge.To == item {
+			ctx.KeyVariables.ClosureMap.Edges = append(ctx.KeyVariables.ClosureMap.Edges[:i], ctx.KeyVariables.ClosureMap.Edges[i+1:]...)
+			continue
+		}
+		i++
+		if edge.From > item {
+			edge.From--
+		}
+		if edge.To > item {
+			edge.To--
+		}
+	}
 }
 
 func (ctx *LR1Context) GenerateAutomaton() {
