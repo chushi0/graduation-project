@@ -1,6 +1,7 @@
 #pragma once
 
-#include "./ui_mainwindow.h"
+#include "ErrorDialog.h"
+#include "ui_mainwindow.h"
 #include "widget/ClickableLabel.h"
 #include <QMainWindow>
 #include <QTimer>
@@ -18,6 +19,7 @@ protected:
 private slots:
 	void codeLineChange();
 	void codeChange();
+	void codePositionChanged(int line, int index);
 	void actionNewFile();
 	void actionAlogLL();
 	void actionAlogLLWithoutTranslate();
@@ -26,6 +28,7 @@ private slots:
 	void actionAlogLR1();
 	void actionAlogLALR();
 	void receiveProduction();
+	void statusLabelClicked();
 
 private:
 	void updateList(QListWidget *listWidget, QStringList items);
@@ -33,6 +36,8 @@ private:
 private:
 	Ui::MainWindow *ui;
 	ClickableLabel *statusLabel;
+	QLabel *columnLabel;
+	ErrorDialog errorDialog;
 	QTimer codeAnalyseTimer;
 
 	QString parseId;

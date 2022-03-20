@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "ErrorDialog.h"
 #include "Qsci/qscilexercpp.h"
 #include "demo_ll_alogrithm.h"
 #include "demo_lr0_alogrithm.h"
@@ -10,7 +11,7 @@
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
-	: QMainWindow(parent), ui(new Ui::MainWindow), parseId("") {
+	: QMainWindow(parent), ui(new Ui::MainWindow), parseId(""), errorDialog() {
 	codeAnalyseTimer.start(100);
 
 	connect(&codeAnalyseTimer, &QTimer::timeout, this,
@@ -34,11 +35,17 @@ MainWindow::MainWindow(QWidget *parent)
 	ui->codeView->setCaretLineVisible(true);
 	statusLabel = new ClickableLabel(ui->statusbar);
 	ui->statusbar->addWidget(statusLabel);
+	columnLabel = new QLabel(ui->statusbar);
+	ui->statusbar->addPermanentWidget(columnLabel);
 
 	connect(ui->codeView, &QsciScintilla::linesChanged, this,
 			&MainWindow::codeLineChange);
 	connect(ui->codeView, &QsciScintilla::textChanged, this,
 			&MainWindow::codeChange);
+	connect(ui->codeView, &QsciScintilla::cursorPositionChanged, this,
+			&MainWindow::codePositionChanged);
+	connect(statusLabel, &ClickableLabel::clicked, this,
+			&MainWindow::statusLabelClicked);
 
 	connect(ui->actionNewFile, &QAction::triggered, this,
 			&MainWindow::actionNewFile);
@@ -54,6 +61,9 @@ MainWindow::MainWindow(QWidget *parent)
 			&MainWindow::actionAlogLR1);
 	connect(ui->actionLALR, &QAction::triggered, this,
 			&MainWindow::actionAlogLALR);
+
+	codeChange();
+	codePositionChanged(1, 0);
 }
 
 MainWindow::~MainWindow() {
@@ -61,6 +71,7 @@ MainWindow::~MainWindow() {
 	if (!parseId.isEmpty()) {
 		ipc::ProductionParseCancel(parseId);
 	}
+	exit(0);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -83,6 +94,18 @@ void MainWindow::codeChange() {
 	parseId = ipc::ProductionParseStart(ui->codeView->text());
 	statusLabel->setText("正在解析产生式代码...");
 	receiveProduction();
+}
+
+void MainWindow::codePositionChanged(int line, int index) {
+	int select = ui->codeView->selectedText().length();
+	if (select == 0) {
+		columnLabel->setText(QString("行 %1, 列 %2").arg(line).arg(index));
+	} else {
+		columnLabel->setText(QString("行 %1, 列 %2 (已选择 %3)")
+								 .arg(line)
+								 .arg(index)
+								 .arg(select));
+	}
 }
 
 void MainWindow::actionNewFile() {
@@ -137,6 +160,11 @@ void MainWindow::receiveProduction() {
 
 	updateList(ui->nonterminalList, result.nonterminals);
 	updateList(ui->terminalList, result.terminals);
+	errorDialog.updateInformation(&result);
+}
+
+void MainWindow::statusLabelClicked() {
+	errorDialog.show();
 }
 
 void MainWindow::updateList(QListWidget *listWidget, QStringList items) {

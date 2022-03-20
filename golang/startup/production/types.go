@@ -118,7 +118,15 @@ const (
 	ErrorType_MissingProduct ErrorType = 20004
 	// 语法分析：过多的生成标记
 	ErrorType_TooManyProduct ErrorType = 20005
+	// 语法分析：过多的开始符号定义
+	ErrorType_TooManyStartSymbolDeclear ErrorType = 20006
 
 	// 语义分析：缺少开始符号
 	ErrorType_NoStartSymbol ErrorType = 30001
+	// 语义分析：不推荐的非终结符
+	ErrorType_NotSuggestNonterminal ErrorType = 30002
+	// 语义分析：未声明开始符号
+	ErrorType_StartSymbolNotDeclear ErrorType = 30003
+	// 语义分析：重复产生式
+	ErrorType_SameProduction ErrorType = 30004
 )

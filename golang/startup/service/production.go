@@ -91,7 +91,7 @@ func ProductionParseCancel(req json.RawMessage) (code int, resp interface{}, err
 
 func ProcessProductionParse(code string, process *ProductionProcess) {
 	defer func() { process.Exit = true }()
-	productions, errors := production.ParseProduction(code, &process.Interrupt)
+	productions, _, errors := production.ParseProduction(code, &process.Interrupt)
 	if process.Interrupt {
 		return
 	}

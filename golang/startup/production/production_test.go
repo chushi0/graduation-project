@@ -7,7 +7,7 @@ import (
 )
 
 func TestProduction(t *testing.T) {
-	_, e := production.ParseProduction(`
+	_, _, e := production.ParseProduction(`
 	E := E + E
 	| E - E
 	| (E)

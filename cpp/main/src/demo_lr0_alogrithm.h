@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./ui_demo_lr0_window.h"
+#include "ui_demo_lr0_window.h"
 #include <QLabel>
 #include <QMainWindow>
 #include <QProgressBar>

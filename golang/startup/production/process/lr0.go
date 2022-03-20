@@ -115,7 +115,7 @@ func (ctx *LR0Context) sortNonterminals() {
 }
 
 func (ctx *LR0Context) ParseCode() {
-	prods, errs := production.ParseProduction(ctx.Code, nil)
+	prods, start, errs := production.ParseProduction(ctx.Code, nil)
 	if len(errs.Errors) > 0 {
 		ctx.shutdownPipeline(&LR0Result{
 			Code: LR0_Error_ParseCode,
@@ -123,6 +123,7 @@ func (ctx *LR0Context) ParseCode() {
 	}
 	ctx.KeyVariables.Productions = prods
 	ctx.Grammer = NewGrammer(prods)
+	ctx.Grammer.StartNonterminal = start
 	ctx.KeyVariables.Terminals = make([]string, 0, len(ctx.Grammer.Terminals))
 	for terminal := range ctx.Grammer.Terminals {
 		ctx.KeyVariables.Terminals = append(ctx.KeyVariables.Terminals, terminal)

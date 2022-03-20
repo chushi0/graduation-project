@@ -131,7 +131,7 @@ func (ctx *LLContext) Build() {
 }
 
 func (ctx *LLContext) ParseCode() {
-	prods, errs := production.ParseProduction(ctx.Code, nil)
+	prods, start, errs := production.ParseProduction(ctx.Code, nil)
 	if len(errs.Errors) > 0 {
 		ctx.shutdownPipeline(&LLResult{
 			Code: LL_Error_ParseCode,
@@ -139,6 +139,7 @@ func (ctx *LLContext) ParseCode() {
 	}
 	ctx.KeyVariables.Productions = prods
 	ctx.Grammer = NewGrammer(prods)
+	ctx.Grammer.StartNonterminal = start
 	ctx.KeyVariables.Terminals = make([]string, 0, len(ctx.Grammer.Terminals))
 	for terminal := range ctx.Grammer.Terminals {
 		ctx.KeyVariables.Terminals = append(ctx.KeyVariables.Terminals, terminal)
