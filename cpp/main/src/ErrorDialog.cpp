@@ -35,6 +35,10 @@ ErrorDialog::ErrorDialog(QWidget *parent) : QDialog(parent) {
 ErrorDialog::~ErrorDialog() {
 }
 
+void ErrorDialog::initView() {
+	ui.tableWidget->resizeColumnsToContents();
+}
+
 void ErrorDialog::updateInformation(ipc::ProductionResult *result) {
 	cacheErrors.clear();
 	cacheErrors.append(result->fatals);

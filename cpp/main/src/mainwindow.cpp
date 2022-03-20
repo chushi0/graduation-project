@@ -63,7 +63,8 @@ MainWindow::MainWindow(QWidget *parent)
 			&MainWindow::actionAlogLALR);
 
 	codeChange();
-	codePositionChanged(1, 0);
+	codePositionChanged(0, 0);
+	errorDialog.initView();
 }
 
 MainWindow::~MainWindow() {
@@ -99,10 +100,10 @@ void MainWindow::codeChange() {
 void MainWindow::codePositionChanged(int line, int index) {
 	int select = ui->codeView->selectedText().length();
 	if (select == 0) {
-		columnLabel->setText(QString("行 %1, 列 %2").arg(line).arg(index));
+		columnLabel->setText(QString("行 %1, 列 %2").arg(line + 1).arg(index));
 	} else {
 		columnLabel->setText(QString("行 %1, 列 %2 (已选择 %3)")
-								 .arg(line)
+								 .arg(line + 1)
 								 .arg(index)
 								 .arg(select));
 	}
@@ -164,6 +165,7 @@ void MainWindow::receiveProduction() {
 }
 
 void MainWindow::statusLabelClicked() {
+	errorDialog.initView();
 	errorDialog.show();
 }
 

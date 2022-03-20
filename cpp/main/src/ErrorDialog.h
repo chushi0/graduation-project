@@ -11,6 +11,7 @@ public:
 	virtual ~ErrorDialog();
 
 	void updateInformation(ipc::ProductionResult *result);
+	void initView();
 
 private:
 	Ui::ErrorDialog ui;
