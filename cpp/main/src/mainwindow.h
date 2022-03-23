@@ -10,7 +10,8 @@ class MainWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	MainWindow(QWidget *parent = nullptr);
+	explicit MainWindow(QWidget *parent = nullptr,
+						QString filename = QString());
 	~MainWindow();
 
 protected:
@@ -21,6 +22,8 @@ private slots:
 	void codeChange();
 	void codePositionChanged(int line, int index);
 	void actionNewFile();
+	void actionOpenFile();
+	void actionSaveFile();
 	void actionAlogLL();
 	void actionAlogLLWithoutTranslate();
 	void actionAlogLR0();

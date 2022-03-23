@@ -95,7 +95,6 @@
     <addaction name="actionNewFile"/>
     <addaction name="actionOpenFile"/>
     <addaction name="actionSaveFile"/>
-    <addaction name="actionSaveAsFile"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -128,8 +127,15 @@
     <addaction name="actionLR_1"/>
     <addaction name="actionLALR"/>
    </widget>
+   <widget class="QMenu" name="menu_4">
+    <property name="title">
+     <string>窗口</string>
+    </property>
+    <addaction name="actionErrorDialog"/>
+   </widget>
    <addaction name="menu"/>
    <addaction name="menubianji"/>
+   <addaction name="menu_4"/>
    <addaction name="menu_2"/>
    <addaction name="menu_3"/>
   </widget>
@@ -296,6 +302,11 @@
   <action name="actionLALR">
    <property name="text">
     <string>LALR</string>
+   </property>
+  </action>
+  <action name="actionErrorDialog">
+   <property name="text">
+    <string>错误信息</string>
    </property>
   </action>
  </widget>

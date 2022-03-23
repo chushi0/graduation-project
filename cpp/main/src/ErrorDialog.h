@@ -7,7 +7,7 @@
 class ErrorDialog : public QDialog {
 
 public:
-	ErrorDialog(QWidget *parent = nullptr);
+	explicit ErrorDialog(QWidget *parent = nullptr);
 	virtual ~ErrorDialog();
 
 	void updateInformation(ipc::ProductionResult *result);

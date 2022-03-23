@@ -5,7 +5,7 @@ class ClickableLabel : public QLabel {
 	Q_OBJECT
 
 public:
-	ClickableLabel(QWidget *parnet = nullptr);
+	explicit ClickableLabel(QWidget *parnet = nullptr);
 	~ClickableLabel();
 
 signals:

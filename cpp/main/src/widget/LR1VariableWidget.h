@@ -9,7 +9,7 @@ class LR1VariableWidget : public QWidget {
 	Q_OBJECT
 
 public:
-	LR1VariableWidget(QWidget *parent);
+	explicit LR1VariableWidget(QWidget *parent);
 	~LR1VariableWidget();
 
 	void setVariableAndPoint(const ipc::LR1BreakpointVariables &variable,

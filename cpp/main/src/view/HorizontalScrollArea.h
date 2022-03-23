@@ -5,7 +5,7 @@
 class HorizontalScrollArea : public QScrollArea {
 	Q_OBJECT
 public:
-	HorizontalScrollArea(QWidget *parent);
+	explicit HorizontalScrollArea(QWidget *parent);
 
 protected:
 	virtual void enterEvent(QEnterEvent *) override;

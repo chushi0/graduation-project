@@ -8,7 +8,7 @@ class LLVariableWidget : public QWidget {
 	Q_OBJECT
 
 public:
-	LLVariableWidget(QWidget *parent);
+	explicit LLVariableWidget(QWidget *parent);
 	~LLVariableWidget();
 
 	void setVariableAndPoint(const ipc::LLBreakpointVariables &variable,

@@ -7,10 +7,26 @@
 #include "ipc/base.h"
 #include "ipc/ipc.h"
 #include <QCloseEvent>
+#include <QFileDialog>
 #include <QFontDatabase>
 #include <QMessageBox>
 
-MainWindow::MainWindow(QWidget *parent)
+static QString readFileContent(QString filename) {
+	QFile file(filename);
+	file.open(QIODevice::ReadOnly | QIODevice::Text);
+	auto content = file.readAll();
+	file.close();
+	return QString::fromLatin1(content);
+}
+
+static void writeFileContent(QString filename, QString content) {
+	QFile file(filename);
+	file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+	file.write(content.toLatin1());
+	file.close();
+}
+
+MainWindow::MainWindow(QWidget *parent, QString filename)
 	: QMainWindow(parent), ui(new Ui::MainWindow), parseId(""), errorDialog() {
 	codeAnalyseTimer.start(100);
 
@@ -49,7 +65,17 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(ui->actionNewFile, &QAction::triggered, this,
 			&MainWindow::actionNewFile);
+	connect(ui->actionOpenFile, &QAction::triggered, this,
+			&MainWindow::actionOpenFile);
+	connect(ui->actionSaveFile, &QAction::triggered, this,
+			&MainWindow::actionSaveFile);
 	connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
+	connect(ui->actionUndo, &QAction::triggered, ui->codeView,
+			&QsciScintilla::undo);
+	connect(ui->actionRedo, &QAction::triggered, ui->codeView,
+			&QsciScintilla::redo);
+	connect(ui->actionErrorDialog, &QAction::triggered, this,
+			&MainWindow::statusLabelClicked);
 	connect(ui->actionLL, &QAction::triggered, this, &MainWindow::actionAlogLL);
 	connect(ui->actionLL_2, &QAction::triggered, this,
 			&MainWindow::actionAlogLLWithoutTranslate);
@@ -65,14 +91,18 @@ MainWindow::MainWindow(QWidget *parent)
 	codeChange();
 	codePositionChanged(0, 0);
 	errorDialog.initView();
+
+	if (!filename.isEmpty()) {
+		ui->codeView->setText(readFileContent(filename));
+	}
 }
 
 MainWindow::~MainWindow() {
 	delete ui;
+	errorDialog.close();
 	if (!parseId.isEmpty()) {
 		ipc::ProductionParseCancel(parseId);
 	}
-	exit(0);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -113,6 +143,27 @@ void MainWindow::actionNewFile() {
 	auto w = new MainWindow();
 	w->show();
 	w->activateWindow();
+}
+
+void MainWindow::actionOpenFile() {
+	QString fileName = QFileDialog::getOpenFileName(this);
+	if (fileName.isEmpty()) {
+		return;
+	}
+	if (ui->codeView->text().isEmpty()) {
+		ui->codeView->setText(readFileContent(fileName));
+		return;
+	}
+	auto w = new MainWindow(nullptr, fileName);
+	w->show();
+}
+
+void MainWindow::actionSaveFile() {
+	QString fileName = QFileDialog::getSaveFileName(this);
+	if (fileName.isEmpty()) {
+		return;
+	}
+	writeFileContent(fileName, ui->codeView->text());
 }
 
 void MainWindow::actionAlogLL() {
@@ -167,6 +218,7 @@ void MainWindow::receiveProduction() {
 void MainWindow::statusLabelClicked() {
 	errorDialog.initView();
 	errorDialog.show();
+	errorDialog.activateWindow();
 }
 
 void MainWindow::updateList(QListWidget *listWidget, QStringList items) {
