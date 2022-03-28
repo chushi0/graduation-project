@@ -21,6 +21,7 @@ type LLContext struct {
 	Code          string
 	WithTranslate bool
 	KeyVariables  *LLKeyVariables
+	CodeSaver
 }
 
 type LLKeyVariables struct {
@@ -128,6 +129,9 @@ func (ctx *LLContext) Calculate() {
 func (ctx *LLContext) Build() {
 	// 生成自动机
 	ctx.GenerateAutomaton()
+	if ctx.CodeSaver.Enable {
+		ctx.GenerateYaccCode()
+	}
 }
 
 func (ctx *LLContext) ParseCode() {
@@ -610,10 +614,9 @@ func (ctx *LLContext) GenerateAutomaton() {
 func (ctx *LLContext) GenerateYaccCode() {
 	serials := NewSerialTokens()
 	prodSerials := make([]string, len(ctx.KeyVariables.Productions))
-	// FIXME: 测试时临时生成到文件中
-	headFile, _ := os.Create("test.h")
+	headFile, _ := os.Create(ctx.GetHeaderPath())
 	headBufWrite := bufio.NewWriter(headFile)
-	cppFile, _ := os.Create("test.cpp")
+	cppFile, _ := os.Create(ctx.GetSourcePath())
 	cppBufWrite := bufio.NewWriter(cppFile)
 	defer func() {
 		headBufWrite.Flush()
@@ -725,14 +728,14 @@ namespace %s {
 
 	// 实现文件
 
-	cppBufWrite.WriteString(`
+	cppBufWrite.WriteString(fmt.Sprintf(`
 /**
  * Auto-generate file. DO NOT MODIFY.
  * all your change WILL BE LOST after you re-generate file.
  */
-#include "test.h"
+#include "%s"
 #include <vector>
-`)
+`, ctx.GetIncludeName()))
 	cppBufWrite.WriteString(fmt.Sprintf(`
 #ifdef %s
 using namespace %s;
@@ -748,14 +751,14 @@ bool Parse(IParser* parser)
 	std::vector<int> stack;
 	stack.push_back(Nonterminal_%s);
 	int token = parser->Next();
-	while(stack.size() > 0) {
+	while (stack.size() > 0) {
 		int last = stack.back();
 		stack.pop_back();
-		switch(last) {
+		switch (last) {
 `, serials.Map[ctx.Grammer.StartNonterminal].SerialString))
 	for nonterminal := range ctx.Grammer.Nonterminals {
 		cppBufWrite.WriteString(fmt.Sprintf(`			case Nonterminal_%s:
-				switch(token) {
+				switch (token) {
 `, serials.Map[nonterminal].SerialString))
 		allSelect := make([]string, 0)
 		for i, prod := range ctx.KeyVariables.Productions {

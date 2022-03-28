@@ -1,8 +1,13 @@
 package process
 
 import (
+	"bufio"
 	"fmt"
+	"math/rand"
+	"os"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/chushi0/graduation_project/golang/startup/debug"
 	"github.com/chushi0/graduation_project/golang/startup/production"
@@ -15,6 +20,7 @@ type LR1Context struct {
 	Code         string
 	KeyVariables *LR1Variables
 	LALR         bool
+	CodeSaver
 }
 
 type LR1Variables struct {
@@ -492,4 +498,265 @@ func (ctx *LR1Context) SetAutomatonReduce(closure int, terminal string, reduce s
 
 	ctx.KeyVariables.ActionTable[closure][terminal] = reduce
 	return true
+}
+
+func (ctx *LR1Context) GenerateYaccCode() {
+	serials := NewSerialTokens()
+	prodSerials := make([]string, len(ctx.KeyVariables.Productions))
+	headFile, _ := os.Create(ctx.GetHeaderPath())
+	headBufWrite := bufio.NewWriter(headFile)
+	cppFile, _ := os.Create(ctx.GetSourcePath())
+	cppBufWrite := bufio.NewWriter(cppFile)
+	defer func() {
+		headBufWrite.Flush()
+		headFile.Close()
+		cppBufWrite.Flush()
+		cppFile.Close()
+	}()
+
+	headBufWrite.WriteString(`#pragma once
+/**
+ * Auto-generate header file.
+ * After you re-generate file, ALL YOUR CHANGE WILL BE LOST!
+ */
+`)
+	// 随机命名空间
+	randomNamespace := fmt.Sprintf("LR1_%d_%d", rand.Int(), rand.Int())
+	headBufWrite.WriteString(fmt.Sprintf(`
+// By modify this macro, you can define automaton code in namespace
+// #define %s
+
+#ifdef %s
+namespace %s {
+#endif
+`, randomNamespace, randomNamespace, randomNamespace))
+
+	// 写入原始代码
+	headBufWrite.WriteString("\n\t// Production Definition Code\n")
+	for _, line := range strings.Split(ctx.Code, "\n") {
+		headBufWrite.WriteString(fmt.Sprintf("\t// %s\n", line))
+	}
+
+	// 写入终结符定义
+	headBufWrite.WriteString(`
+	// Terminals Definition
+	constexpr int TerminalEOF = -1;
+`)
+	for terminal := range ctx.Grammer.Terminals {
+		serials.Put(terminal)
+		token := serials.Map[terminal]
+		headBufWrite.WriteString(fmt.Sprintf("\tconstexpr int Terminal_%s = %d; // %s\n", token.SerialString, token.Index, terminal))
+	}
+
+	// 写入非终结符定义
+	headBufWrite.WriteString(`
+	// Nonterminals Definition
+`)
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		serials.Put(nonterminal)
+		token := serials.Map[nonterminal]
+		headBufWrite.WriteString(fmt.Sprintf("\tconstexpr int Nonterminal_%s = %d; // %s\n", token.SerialString, token.Index, nonterminal))
+	}
+
+	// 写入产生式定义
+	headBufWrite.WriteString(`
+	// Productions Definition
+`)
+	for i, prod := range ctx.KeyVariables.Productions {
+		prodSerials[i] = serials.Map[prod[0]].SerialString
+		for j := 1; j < len(prod); j++ {
+			prodSerials[i] += "_" + serials.Map[prod[j]].SerialString
+		}
+	}
+	for i, prod := range ctx.KeyVariables.Productions {
+		headBufWrite.WriteString(fmt.Sprintf("\tconstexpr int Production_%s = %d; // ", prodSerials[i], i))
+		headBufWrite.WriteString(prod[0])
+		headBufWrite.WriteString(" :=")
+		for j := 1; j < len(prod); j++ {
+			headBufWrite.WriteString(" ")
+			headBufWrite.WriteString(prod[j])
+		}
+		headBufWrite.WriteString("\n")
+	}
+
+	// 其他结构定义
+	headBufWrite.WriteString(`
+	// Compile Error (will throw by parser function)
+	struct CompileError {
+		// an array contains terminal's id what parser expect
+		int* Expected;
+		// size of Expected
+		int ExpectedSize;
+		// parser read actually
+		int Actual;
+	};
+
+	// Interface which can be easily defined by user
+	class IParser {
+	public:
+		// Read a terminal from lexer. If no more terminals, return TerminalEOF(-1)
+		virtual int Next() = 0;
+		// Reduce by production
+		virtual void Reduce(int id) = 0;
+		// Error occurred when parse (parser will exit)
+		virtual void Panic(CompileError* error) = 0;
+	};
+
+	// main entry parser
+	// true means success, false means fail (after calling IParser.Panic)
+	bool Parse(IParser* parser);
+`)
+
+	headBufWrite.WriteString(fmt.Sprintf(`
+#ifdef %s
+}
+#endif
+`, randomNamespace))
+
+	cppBufWrite.WriteString(fmt.Sprintf(`
+/**
+ * Auto-generate file. DO NOT MODIFY.
+ * all your change WILL BE LOST after you re-generate file.
+ */
+#include "%s"
+#include <vector>
+`, ctx.GetIncludeName()))
+	cppBufWrite.WriteString(fmt.Sprintf(`
+#ifdef %s
+using namespace %s;
+#endif
+
+#ifdef %s
+bool %s::Parse(IParser* parser)
+#else
+bool Parse(IParser* parser)
+#endif
+`, randomNamespace, randomNamespace, randomNamespace, randomNamespace))
+	cppBufWrite.WriteString(`{
+	std::vector<int> stateStack;
+	std::vector<int> symbolStack;
+	stateStack.push_back(0);
+	int token = parser->Next();
+	while (true) {
+		switch (stateStack.back()) {
+`)
+	for state := range ctx.KeyVariables.ClosureMap.Closures {
+		cppBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
+		cppBufWrite.WriteString("\t\t\t\tswitch (token) {\n")
+		allSelect := make([]string, 0)
+		// action
+		for terminal, action := range ctx.KeyVariables.ActionTable[state] {
+			if action == "" {
+				continue
+			}
+			if terminal == "$" {
+				allSelect = append(allSelect, "TerminalEOF")
+				cppBufWrite.WriteString("\t\t\t\t\tcase TerminalEOF:\n")
+			} else {
+				allSelect = append(allSelect, fmt.Sprintf("Terminal_%s", serials.Map[terminal].SerialString))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Terminal_%s:\n", serials.Map[terminal].SerialString))
+			}
+			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\t// %s\n", action))
+			switch action[0] {
+			case 'a': // acc
+				// 归约开始产生式
+				prod := (*ctx.KeyVariables.ClosureMap.Closures[0])[0].Prod
+				count := len(ctx.KeyVariables.Productions[prod]) - 1
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser->Reduce(%d);\n", prod))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.erase(stateStack.end() - %d, stateStack.end());\n", count))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack.erase(symbolStack.end() - %d, symbolStack.end());\n", count))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack.push_back(Nonterminal_%s);\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
+				cppBufWrite.WriteString("\t\t\t\t\t\treturn true;\n")
+			case 's':
+				// 移入，并转移到其他状态
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.push_back(%s);\n", action[1:]))
+				cppBufWrite.WriteString("\t\t\t\t\t\tsymbolStack.push_back(token);\n")
+				cppBufWrite.WriteString("\t\t\t\t\t\ttoken = parser->Next();\n")
+				cppBufWrite.WriteString("\t\t\t\t\t\tcontinue;\n")
+			case 'r':
+				// 归约
+				prod, _ := strconv.Atoi(action[1:])
+				count := len(ctx.KeyVariables.Productions[prod]) - 1
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser->Reduce(%s);\n", action[1:]))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.erase(stateStack.end() - %d, stateStack.end());\n", count))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack.erase(symbolStack.end() - %d, symbolStack.end());\n", count))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack.push_back(Nonterminal_%s);\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
+				cppBufWrite.WriteString("\t\t\t\t\t\tbreak;\n")
+			}
+		}
+		cppBufWrite.WriteString("\t\t\t\t\tdefault:  {\n\t\t\t\t\t\tint expected[] = {")
+		for i, v := range allSelect {
+			if i > 0 {
+				cppBufWrite.WriteString(", ")
+			}
+			cppBufWrite.WriteString(v)
+		}
+		cppBufWrite.WriteString(`};
+						CompileError compileError = {
+							expected, sizeof(expected) / sizeof(int), token
+						};
+						parser->Panic(&compileError);
+						return false;
+					}
+				}
+				break;
+`)
+	}
+	cppBufWrite.WriteString("\t\t}\n")
+	cppBufWrite.WriteString("\t\tswitch (stateStack.back()) {\n")
+	for state := range ctx.KeyVariables.ClosureMap.Closures {
+		if !ctx.checkGotoTableAvailable(state) {
+			continue
+		}
+		cppBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
+		cppBufWrite.WriteString("\t\t\t\tswitch (symbolStack.back()) {\n")
+		allSelect := make([]string, 0)
+		// goto
+		for terminal, nextState := range ctx.KeyVariables.GotoTable[state] {
+			if nextState == -1 {
+				continue
+			}
+			allSelect = append(allSelect, fmt.Sprintf("Nonterminal_%s", serials.Map[terminal].SerialString))
+			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Nonterminal_%s:\n", serials.Map[terminal].SerialString))
+			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.push_back(%d);\n", nextState))
+			cppBufWrite.WriteString("\t\t\t\t\t\tbreak;\n")
+		}
+		cppBufWrite.WriteString("\t\t\t\t\tdefault:  {\n\t\t\t\t\t\tint expected[] = {")
+		for i, v := range allSelect {
+			if i > 0 {
+				cppBufWrite.WriteString(", ")
+			}
+			cppBufWrite.WriteString(v)
+		}
+		cppBufWrite.WriteString(`};
+						CompileError compileError = {
+							expected, sizeof(expected) / sizeof(int), stateStack.back()
+						};
+						parser->Panic(&compileError);
+						return false;
+					}
+				}
+				break;
+`)
+	}
+	cppBufWrite.WriteString(`			default: {
+				int expected[] = {};
+				CompileError compileError = {
+					expected, 0, stateStack.back()
+				};
+				parser->Panic(&compileError);
+				return false;
+			}
+		}
+	}
+}`)
+}
+
+func (ctx *LR1Context) checkGotoTableAvailable(state int) bool {
+	for _, nextState := range ctx.KeyVariables.GotoTable[state] {
+		if nextState != -1 {
+			return true
+		}
+	}
+	return false
 }

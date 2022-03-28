@@ -21,6 +21,9 @@ func TestLR0ItemClosure(t *testing.T) {
 	F := (E)
 	`
 	ctx.SLR = true
+	ctx.CodeSaver.Enable = true
+	ctx.CodeSaver.SavePath = "F:\\test.h"
+	ctx.CodeSaver.Normalize()
 	entry := ctx.CreateLR0ProcessEntry()
 	dbg := debug.NewDebugContext()
 	dbg.SwitchRunMode(debug.RunMode_Run)
