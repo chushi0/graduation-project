@@ -701,7 +701,7 @@ bool Parse(IParser* parser)
 				cppBufWrite.WriteString("\t\t\t\t\t\tbreak;\n")
 			}
 		}
-		cppBufWrite.WriteString("\t\t\t\t\tdefault:  {\n\t\t\t\t\t\tint expected[] = {")
+		cppBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\tint expected[] = {")
 		for i, v := range allSelect {
 			if i > 0 {
 				cppBufWrite.WriteString(", ")
@@ -738,7 +738,7 @@ bool Parse(IParser* parser)
 			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.push_back(%d);\n", nextState))
 			cppBufWrite.WriteString("\t\t\t\t\t\tbreak;\n")
 		}
-		cppBufWrite.WriteString("\t\t\t\t\tdefault:  {\n\t\t\t\t\t\tint expected[] = {")
+		cppBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\tint expected[] = {")
 		for i, v := range allSelect {
 			if i > 0 {
 				cppBufWrite.WriteString(", ")
