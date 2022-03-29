@@ -41,6 +41,7 @@ func LLProcessRequest(req json.RawMessage) (code int, resp interface{}, err erro
 	if reqStruct.SavePath != "" {
 		process.LLContext.Enable = true
 		process.LLContext.SavePath = reqStruct.SavePath
+		process.LLContext.Normalize()
 	}
 	entry := process.LLContext.CreateLLProcessEntry()
 	process.DebugContext = debug.StartDebugGoroutine(entry)

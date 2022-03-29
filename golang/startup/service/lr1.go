@@ -41,6 +41,7 @@ func LR1ProcessRequest(req json.RawMessage) (code int, resp interface{}, err err
 	if reqStruct.SavePath != "" {
 		process.LR1Context.Enable = true
 		process.LR1Context.SavePath = reqStruct.SavePath
+		process.LR1Context.Normalize()
 	}
 	entry := process.LR1Context.CreateLR1ProcessEntry()
 	process.DebugContext = debug.StartDebugGoroutine(entry)
