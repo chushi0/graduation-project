@@ -50,10 +50,12 @@ void ipc::ProductionParseCancel(QString id) {
 	auto resp = RpcRequest(req);
 }
 
-QString ipc::LLProcessRequest(QString code, bool withTranslate) {
+QString ipc::LLProcessRequest(QString code, bool withTranslate,
+							  QString savePath) {
 	QJsonObject data;
 	data["code"] = code;
 	data["with_translate"] = withTranslate;
+	data["save_path"] = savePath;
 	QJsonObject wrap;
 	wrap["action"] = "ll_process_request";
 	wrap["data"] = data;
@@ -136,10 +138,11 @@ bool ipc::LLProcessExit(QString id, LLExitResult *exitResult) {
 	return true;
 }
 
-QString ipc::LR0ProcessRequest(QString code, bool slr) {
+QString ipc::LR0ProcessRequest(QString code, bool slr, QString savePath) {
 	QJsonObject data;
 	data["code"] = code;
 	data["slr"] = slr;
+	data["save_path"] = savePath;
 	QJsonObject wrap;
 	wrap["action"] = "lr0_process_request";
 	wrap["data"] = data;
@@ -222,10 +225,11 @@ bool ipc::LR0ProcessExit(QString id, LR0ExitResult *exitResult) {
 	return true;
 }
 
-QString ipc::LR1ProcessRequest(QString code, bool lalr) {
+QString ipc::LR1ProcessRequest(QString code, bool lalr, QString savePath) {
 	QJsonObject data;
 	data["code"] = code;
 	data["lalr"] = lalr;
+	data["save_path"] = savePath;
 	QJsonObject wrap;
 	wrap["action"] = "lr1_process_request";
 	wrap["data"] = data;

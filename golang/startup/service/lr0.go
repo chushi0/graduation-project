@@ -26,8 +26,9 @@ func init() {
 
 func LR0ProcessRequest(req json.RawMessage) (code int, resp interface{}, err error) {
 	var reqStruct struct {
-		Code string `json:"code"`
-		SLR  bool   `json:"slr"`
+		Code     string `json:"code"`
+		SLR      bool   `json:"slr"`
+		SavePath string `json:"save_path"`
 	}
 	err = json.Unmarshal(req, &reqStruct)
 	if err != nil {
@@ -37,6 +38,10 @@ func LR0ProcessRequest(req json.RawMessage) (code int, resp interface{}, err err
 	process.LR0Context = lr.NewLR0Context()
 	process.LR0Context.Code = reqStruct.Code
 	process.LR0Context.SLR = reqStruct.SLR
+	if reqStruct.SavePath != "" {
+		process.LR0Context.Enable = true
+		process.LR0Context.SavePath = reqStruct.SavePath
+	}
 	entry := process.LR0Context.CreateLR0ProcessEntry()
 	process.DebugContext = debug.StartDebugGoroutine(entry)
 	id := uuid.New()

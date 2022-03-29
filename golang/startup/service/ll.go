@@ -28,6 +28,7 @@ func LLProcessRequest(req json.RawMessage) (code int, resp interface{}, err erro
 	var reqStruct struct {
 		Code          string `json:"code"`
 		WithTranslate bool   `json:"with_translate"`
+		SavePath      string `json:"save_path"`
 	}
 	err = json.Unmarshal(req, &reqStruct)
 	if err != nil {
@@ -37,6 +38,10 @@ func LLProcessRequest(req json.RawMessage) (code int, resp interface{}, err erro
 	process.LLContext = ll.NewLLContext()
 	process.LLContext.Code = reqStruct.Code
 	process.LLContext.WithTranslate = reqStruct.WithTranslate
+	if reqStruct.SavePath != "" {
+		process.LLContext.Enable = true
+		process.LLContext.SavePath = reqStruct.SavePath
+	}
 	entry := process.LLContext.CreateLLProcessEntry()
 	process.DebugContext = debug.StartDebugGoroutine(entry)
 	id := uuid.New()
