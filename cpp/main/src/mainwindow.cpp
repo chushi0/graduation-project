@@ -17,13 +17,13 @@ static QString readFileContent(QString filename) {
 	file.open(QIODevice::ReadOnly | QIODevice::Text);
 	auto content = file.readAll();
 	file.close();
-	return QString::fromLatin1(content);
+	return QString::fromUtf8(content);
 }
 
 static void writeFileContent(QString filename, QString content) {
 	QFile file(filename);
 	file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
-	file.write(content.toLatin1());
+	file.write(content.toUtf8());
 	file.close();
 }
 
