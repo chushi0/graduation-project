@@ -21,7 +21,7 @@ DemoLR0AlogrithmWindow::DemoLR0AlogrithmWindow(QString code, bool slr)
 
 	processId = ipc::LR0ProcessRequest(code, slr);
 	setProcessBreakpoint();
-	ipc::LR0ProcessSwitchMode(processId, ipc::LLProcessModeRun);
+	ipc::LR0ProcessSwitchMode(processId, ipc::ProcessModeRun);
 	status = Run;
 	processCheck();
 
@@ -434,7 +434,7 @@ void DemoLR0AlogrithmWindow::runButtonTrigger() {
 		return;
 	}
 	setProcessBreakpoint();
-	ipc::LR0ProcessSwitchMode(processId, ipc::LLProcessModeRun);
+	ipc::LR0ProcessSwitchMode(processId, ipc::ProcessModeRun);
 	status = Run;
 	processCheck();
 }
@@ -443,7 +443,7 @@ void DemoLR0AlogrithmWindow::stepButtonTrigger() {
 	if (status != Pause || processId.isEmpty()) {
 		return;
 	}
-	ipc::LR0ProcessSwitchMode(processId, ipc::LLProcessModePause);
+	ipc::LR0ProcessSwitchMode(processId, ipc::ProcessModePause);
 	status = Run;
 	processCheck();
 }
@@ -453,7 +453,7 @@ void DemoLR0AlogrithmWindow::runToCursorTrigger() {
 		return;
 	}
 	setProcessBreakpoint(true);
-	ipc::LR0ProcessSwitchMode(processId, ipc::LLProcessModeRun);
+	ipc::LR0ProcessSwitchMode(processId, ipc::ProcessModeRun);
 	status = Run;
 	processCheck();
 }

@@ -45,6 +45,8 @@ type LLKeyVariables struct {
 	SelectSet []set.StringSet          `json:"select"`
 
 	Automaton map[string]map[string]int `json:"automaton"`
+
+	CodePath string `json:"code_path"`
 }
 
 type LLResult struct {
@@ -74,7 +76,9 @@ func (ctx *LLContext) CreateLLProcessEntry() func(*debug.DebugContext) {
 		ctx.Context = dc
 		ctx.bury("start", 0)
 		ctx.RunPipeline()
-		dc.SwitchRunMode(debug.RunMode_Exit)
+		ctx.shutdownPipeline(&LLResult{
+			Code: LL_Success,
+		})
 	}
 }
 
@@ -612,6 +616,7 @@ func (ctx *LLContext) GenerateAutomaton() {
 }
 
 func (ctx *LLContext) GenerateYaccCode() {
+	ctx.KeyVariables.CodePath = ctx.GetSourcePath()
 	serials := NewSerialTokens()
 	prodSerials := make([]string, len(ctx.KeyVariables.Productions))
 	headFile, _ := os.Create(ctx.GetHeaderPath())

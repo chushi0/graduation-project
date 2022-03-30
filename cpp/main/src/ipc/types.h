@@ -26,9 +26,9 @@ namespace ipc {
 		QList<ErrorType> fatals, errors, warnings;
 	};
 
-	constexpr int LLProcessModeRun = 1;
-	constexpr int LLProcessModePause = 2;
-	constexpr int LLProcessModeExit = 4;
+	constexpr int ProcessModeRun = 1;
+	constexpr int ProcessModePause = 2;
+	constexpr int ProcessModeExit = 4;
 	struct Breakpoint {
 		QString name;
 		int line;
@@ -50,6 +50,7 @@ namespace ipc {
 		QHash<QString, QStringList> firstSet, followSet;
 		QList<QStringList> selectSet;
 		QHash<QString, QHash<QString, int>> automation;
+		QString codePath;
 	};
 	struct LLExitResult {
 		int code;
@@ -84,6 +85,7 @@ namespace ipc {
 		LRItemClosure currentClosure;
 		QList<QHash<QString, QString>> actionTable;
 		QList<QHash<QString, int>> gotoTable;
+		QString codePath;
 	};
 	struct LR0ExitResult {
 		int code;
@@ -103,6 +105,7 @@ namespace ipc {
 		LRItemClosure currentClosure;
 		QList<QHash<QString, QString>> actionTable;
 		QList<QHash<QString, int>> gotoTable;
+		QString codePath;
 	};
 	struct LR1ExitResult {
 		int code;

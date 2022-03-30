@@ -90,6 +90,7 @@ void ipc::parseLLVariables(QJsonObject object, LLBreakpointVariables *out) {
 	parseArrayArrayString(object["select"].toArray(), &out->selectSet);
 	parseHashStringHashStringInt(object["automaton"].toObject(),
 								 &out->automation);
+	out->codePath = object["code_path"].toString();
 }
 
 void ipc::parseLLExitResult(QJsonObject object, LLExitResult *out) {
@@ -115,6 +116,7 @@ void ipc::parseLR0Variables(QJsonObject object, LR0BreakpointVariables *out) {
 	parseArrayHashStringString(object["action_table"].toArray(),
 							   &out->actionTable);
 	parseArrayHashStringInt(object["goto_table"].toArray(), &out->gotoTable);
+	out->codePath = object["code_path"].toString();
 }
 
 void ipc::parseLR0ExitResult(QJsonObject object, LR0ExitResult *out) {
@@ -139,6 +141,7 @@ void ipc::parseLR1Variables(QJsonObject object, LR1BreakpointVariables *out) {
 	parseArrayHashStringString(object["action_table"].toArray(),
 							   &out->actionTable);
 	parseArrayHashStringInt(object["goto_table"].toArray(), &out->gotoTable);
+	out->codePath = object["code_path"].toString();
 }
 
 void ipc::parseLR1ExitResult(QJsonObject object, LR1ExitResult *out) {

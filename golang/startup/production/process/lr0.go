@@ -43,6 +43,8 @@ type LR0Variables struct {
 
 	ActionTable []map[string]string `json:"action_table"`
 	GotoTable   []map[string]int    `json:"goto_table"`
+
+	CodePath string `json:"code_path"`
 }
 
 const (
@@ -73,7 +75,9 @@ func (ctx *LR0Context) CreateLR0ProcessEntry() func(*debug.DebugContext) {
 		ctx.Context = dc
 		ctx.bury("start", 0)
 		ctx.RunPipeline()
-		dc.SwitchRunMode(debug.RunMode_Exit)
+		ctx.shutdownPipeline(&LR0Result{
+			Code: LL_Success,
+		})
 	}
 }
 func (ctx *LR0Context) bury(name string, line int) {
@@ -518,6 +522,7 @@ func (ctx *LR0Context) SetAutomatonReduce(closure int, terminal string, reduce s
 }
 
 func (ctx *LR0Context) GenerateYaccCode() {
+	ctx.KeyVariables.CodePath = ctx.GetSourcePath()
 	serials := NewSerialTokens()
 	prodSerials := make([]string, len(ctx.KeyVariables.Productions))
 	headFile, _ := os.Create(ctx.GetHeaderPath())

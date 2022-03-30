@@ -110,6 +110,7 @@
      <string>生成</string>
     </property>
     <addaction name="actionCodeLL"/>
+    <addaction name="actionCodeLLWithoutTranslate"/>
     <addaction name="separator"/>
     <addaction name="actionCodeLR0"/>
     <addaction name="actionCodeLR1"/>
@@ -307,6 +308,11 @@
   <action name="actionErrorDialog">
    <property name="text">
     <string>错误信息</string>
+   </property>
+  </action>
+  <action name="actionCodeLLWithoutTranslate">
+   <property name="text">
+    <string>生成 LL 代码（跳过文法转换）</string>
    </property>
   </action>
  </widget>

@@ -24,17 +24,31 @@ private slots:
 	void actionNewFile();
 	void actionOpenFile();
 	void actionSaveFile();
+	void actionCodeLL();
+	void actionCodeLLWithoutTranslate();
+	void actionCodeLR0();
+	void actionCodeSLR();
+	void actionCodeLR1();
+	void actionCodeLALR();
 	void actionAlogLL();
 	void actionAlogLLWithoutTranslate();
 	void actionAlogLR0();
 	void actionAlogSLR();
 	void actionAlogLR1();
 	void actionAlogLALR();
-	void receiveProduction();
+	void timerUpdate();
 	void statusLabelClicked();
 
 private:
 	void updateList(QListWidget *listWidget, QStringList items);
+	void receiveProduction();
+	void startCodeProcess();
+	void endCodeProcess();
+	void checkLLProcess();
+	void checkLR0Process();
+	void checkLR1Process();
+
+	bool checkCodeGenerateState();
 
 private:
 	Ui::MainWindow *ui;
@@ -44,4 +58,7 @@ private:
 	QTimer codeAnalyseTimer;
 
 	QString parseId;
+	QString llProcessId;
+	QString lr0ProcessId;
+	QString lr1ProcessId;
 };

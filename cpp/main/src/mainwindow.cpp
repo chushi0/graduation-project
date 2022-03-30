@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QFontDatabase>
 #include <QMessageBox>
+#include <QProcess>
 
 static QString readFileContent(QString filename) {
 	QFile file(filename);
@@ -31,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent, QString filename)
 	codeAnalyseTimer.start(100);
 
 	connect(&codeAnalyseTimer, &QTimer::timeout, this,
-			&MainWindow::receiveProduction);
+			&MainWindow::timerUpdate);
 
 	ui->setupUi(this);
 
@@ -76,6 +77,18 @@ MainWindow::MainWindow(QWidget *parent, QString filename)
 			&QsciScintilla::redo);
 	connect(ui->actionErrorDialog, &QAction::triggered, this,
 			&MainWindow::statusLabelClicked);
+	connect(ui->actionCodeLL, &QAction::triggered, this,
+			&MainWindow::actionCodeLL);
+	connect(ui->actionCodeLLWithoutTranslate, &QAction::triggered, this,
+			&MainWindow::actionCodeLLWithoutTranslate);
+	connect(ui->actionCodeLR0, &QAction::triggered, this,
+			&MainWindow::actionCodeLR0);
+	connect(ui->actionCodeSLR, &QAction::triggered, this,
+			&MainWindow::actionCodeSLR);
+	connect(ui->actionCodeLR1, &QAction::triggered, this,
+			&MainWindow::actionCodeLR1);
+	connect(ui->actionCodeLALR, &QAction::triggered, this,
+			&MainWindow::actionCodeLALR);
 	connect(ui->actionLL, &QAction::triggered, this, &MainWindow::actionAlogLL);
 	connect(ui->actionLL_2, &QAction::triggered, this,
 			&MainWindow::actionAlogLLWithoutTranslate);
@@ -102,6 +115,15 @@ MainWindow::~MainWindow() {
 	errorDialog.close();
 	if (!parseId.isEmpty()) {
 		ipc::ProductionParseCancel(parseId);
+	}
+	if (!llProcessId.isEmpty()) {
+		ipc::LLProcessRelease(llProcessId);
+	}
+	if (!lr0ProcessId.isEmpty()) {
+		ipc::LR0ProcessRelease(lr0ProcessId);
+	}
+	if (!lr1ProcessId.isEmpty()) {
+		ipc::LR1ProcessRelease(lr1ProcessId);
 	}
 }
 
@@ -166,6 +188,92 @@ void MainWindow::actionSaveFile() {
 	writeFileContent(fileName, ui->codeView->text());
 }
 
+void MainWindow::actionCodeLL() {
+	if (checkCodeGenerateState()) {
+		return;
+	}
+	QString fileName = QFileDialog::getSaveFileName(this, "选择导出位置");
+	if (fileName.isEmpty()) {
+		return;
+	}
+	startCodeProcess();
+	llProcessId = ipc::LLProcessRequest(ui->codeView->text(), false, fileName);
+	ipc::LLProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	checkLLProcess();
+}
+
+void MainWindow::actionCodeLLWithoutTranslate() {
+	if (checkCodeGenerateState()) {
+		return;
+	}
+	QString fileName = QFileDialog::getSaveFileName(this, "选择导出位置");
+	if (fileName.isEmpty()) {
+		return;
+	}
+	startCodeProcess();
+	llProcessId = ipc::LLProcessRequest(ui->codeView->text(), true, fileName);
+	ipc::LLProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	checkLLProcess();
+}
+
+void MainWindow::actionCodeLR0() {
+	if (checkCodeGenerateState()) {
+		return;
+	}
+	QString fileName = QFileDialog::getSaveFileName(this, "选择导出位置");
+	if (fileName.isEmpty()) {
+		return;
+	}
+	startCodeProcess();
+	lr0ProcessId =
+		ipc::LR0ProcessRequest(ui->codeView->text(), false, fileName);
+	ipc::LR0ProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	checkLR0Process();
+}
+
+void MainWindow::actionCodeSLR() {
+	if (checkCodeGenerateState()) {
+		return;
+	}
+	QString fileName = QFileDialog::getSaveFileName(this, "选择导出位置");
+	if (fileName.isEmpty()) {
+		return;
+	}
+	startCodeProcess();
+	lr0ProcessId = ipc::LR0ProcessRequest(ui->codeView->text(), true, fileName);
+	ipc::LR0ProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	checkLR0Process();
+}
+
+void MainWindow::actionCodeLR1() {
+	if (checkCodeGenerateState()) {
+		return;
+	}
+	QString fileName = QFileDialog::getSaveFileName(this, "选择导出位置");
+	if (fileName.isEmpty()) {
+		return;
+	}
+	startCodeProcess();
+	lr1ProcessId =
+		ipc::LR1ProcessRequest(ui->codeView->text(), false, fileName);
+	ipc::LR1ProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	checkLR1Process();
+}
+
+void MainWindow::actionCodeLALR() {
+	if (checkCodeGenerateState()) {
+		return;
+	}
+	QString fileName = QFileDialog::getSaveFileName(this, "选择导出位置");
+	if (fileName.isEmpty()) {
+		return;
+	}
+	startCodeProcess();
+	lr1ProcessId = ipc::LR1ProcessRequest(ui->codeView->text(), true, fileName);
+	ipc::LR1ProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	checkLR1Process();
+}
+
 void MainWindow::actionAlogLL() {
 	auto w = new DemoLLAlogrithmWindow(ui->codeView->text(), true);
 	w->show();
@@ -213,6 +321,125 @@ void MainWindow::receiveProduction() {
 	updateList(ui->nonterminalList, result.nonterminals);
 	updateList(ui->terminalList, result.terminals);
 	errorDialog.updateInformation(&result);
+}
+
+void MainWindow::timerUpdate() {
+	receiveProduction();
+	checkLLProcess();
+	checkLR0Process();
+	checkLR1Process();
+}
+
+void MainWindow::startCodeProcess() {
+	setEnabled(false);
+	statusLabel->setText("正在导出代码...");
+	if (!parseId.isEmpty()) {
+		ipc::ProductionParseCancel(parseId);
+		parseId = "";
+	}
+}
+
+void MainWindow::endCodeProcess() {
+	setEnabled(true);
+	codeChange();
+}
+
+void MainWindow::checkLLProcess() {
+	if (llProcessId.isEmpty()) {
+		return;
+	}
+	ipc::LLExitResult result;
+	auto exit = ipc::LLProcessExit(llProcessId, &result);
+	if (exit) {
+		endCodeProcess();
+		ipc::LLProcessRelease(llProcessId);
+		llProcessId = "";
+		switch (result.code) {
+			case 0:
+				QProcess::startDetached(
+					"explorer",
+					{"/select,", result.variable.codePath.replace('/', '\\')});
+				QMessageBox::information(this, "成功", "生成代码成功");
+				break;
+			case 1:
+				QMessageBox::information(this, "生成错误",
+										 "产生式代码解析错误");
+				break;
+			case 2:
+				QMessageBox::information(this, "生成错误",
+										 "Select 集合冲突，无法生成自动机");
+				break;
+		}
+	}
+}
+
+void MainWindow::checkLR0Process() {
+	if (llProcessId.isEmpty()) {
+		return;
+	}
+	ipc::LR0ExitResult result;
+	auto exit = ipc::LR0ProcessExit(lr0ProcessId, &result);
+	if (exit) {
+		endCodeProcess();
+		ipc::LR0ProcessRelease(lr0ProcessId);
+		lr0ProcessId = "";
+		switch (result.code) {
+			case 0:
+				QProcess::startDetached(
+					"explorer",
+					{"/select,", result.variable.codePath.replace('/', '\\')});
+				QMessageBox::information(this, "成功", "生成代码成功");
+				break;
+			case 1:
+				QMessageBox::information(this, "生成错误",
+										 "产生式代码解析错误");
+				break;
+			case 2:
+				QMessageBox::information(this, "生成错误", "没有开始符号");
+				break;
+			case 3:
+				QMessageBox::information(this, "生成错误",
+										 "项目集闭包冲突，无法生成自动机");
+				break;
+		}
+	}
+}
+
+void MainWindow::checkLR1Process() {
+	if (llProcessId.isEmpty()) {
+		return;
+	}
+	ipc::LR1ExitResult result;
+	auto exit = ipc::LR1ProcessExit(lr1ProcessId, &result);
+	if (exit) {
+		endCodeProcess();
+		ipc::LR1ProcessRelease(lr1ProcessId);
+		lr1ProcessId = "";
+		switch (result.code) {
+			case 0:
+				QProcess::startDetached(
+					"explorer",
+					{"/select,", result.variable.codePath.replace('/', '\\')});
+				QMessageBox::information(this, "成功", "生成代码成功");
+				break;
+			case 1:
+				QMessageBox::information(this, "生成错误",
+										 "产生式代码解析错误");
+				break;
+			case 2:
+				QMessageBox::information(this, "生成错误", "没有开始符号");
+				break;
+			case 3:
+				QMessageBox::information(this, "生成错误",
+										 "项目集闭包冲突，无法生成自动机");
+				break;
+		}
+	}
+}
+
+bool MainWindow::checkCodeGenerateState() {
+	return !(llProcessId.isEmpty() && lr0ProcessId.isEmpty() &&
+			 lr1ProcessId.isEmpty());
 }
 
 void MainWindow::statusLabelClicked() {
