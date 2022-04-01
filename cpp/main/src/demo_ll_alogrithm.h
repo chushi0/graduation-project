@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui_demo_ll_window.h"
+#include "widget/DemoWidget.h"
 #include <QLabel>
 #include <QMainWindow>
 #include <QProgressBar>
@@ -33,6 +34,7 @@ private:
 	QString processId;
 	ProcessStatus status;
 	QString currentFunction;
+	QList<DemoWidget *> demoWidgets;
 
 private:
 	void setProcessBreakpoint(bool withSelectLine = false);

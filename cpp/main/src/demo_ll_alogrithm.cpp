@@ -19,6 +19,22 @@ DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code, bool withTranslate)
 	connect(ui->runToCursorButton, &QToolButton::clicked, this,
 			&DemoLLAlogrithmWindow::runToCursorTrigger);
 
+	DemoWidget::Mode modes[] = {
+		DemoWidget::Mode::LL_ProductionList,
+		DemoWidget::Mode::LL_FirstTable,
+		DemoWidget::Mode::LL_FollowTable,
+		DemoWidget::Mode::LL_FirstFollowTable,
+		DemoWidget::Mode::LL_SelectTable,
+		DemoWidget::Mode::LL_AutomationTable,
+	};
+	for (auto mode : modes) {
+		auto widget = new DemoWidget();
+		widget->setMode(mode);
+		widget->translateDefault();
+		widget->show();
+		demoWidgets << widget;
+	}
+
 	processId = ipc::LLProcessRequest(code, withTranslate);
 	setProcessBreakpoint();
 	ipc::LLProcessSwitchMode(processId, ipc::ProcessModeRun);
@@ -32,6 +48,10 @@ DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code, bool withTranslate)
 
 DemoLLAlogrithmWindow::~DemoLLAlogrithmWindow() {
 	delete ui;
+	for (auto widget : demoWidgets) {
+		widget->close();
+		widget->deleteLater();
+	}
 	if (!processId.isEmpty()) {
 		ipc::LLProcessRelease(processId);
 	}
@@ -71,6 +91,9 @@ void DemoLLAlogrithmWindow::processCheck() {
 	if (paused) {
 		status = Pause;
 		ui->keyWidget->setVariableAndPoint(vars, point);
+		for (auto widget : demoWidgets) {
+			widget->setVariableAndPoint(vars, point);
+		}
 		setupPoint(point);
 		return;
 	}
@@ -96,6 +119,9 @@ void DemoLLAlogrithmWindow::processCheck() {
 				point.line = -1;
 				point.name = "GenerateAutomaton";
 				ui->keyWidget->setVariableAndPoint(result.variable, point);
+				for (auto widget : demoWidgets) {
+					widget->setVariableAndPoint(result.variable, point);
+				}
 				setupPoint(point);
 				QMessageBox::information(this, "演示错误",
 										 "Select 集合冲突，无法生成自动机");
