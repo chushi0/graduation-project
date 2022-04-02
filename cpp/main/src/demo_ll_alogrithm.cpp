@@ -1,10 +1,21 @@
 #include "demo_ll_alogrithm.h"
 #include "ipc/base.h"
 #include "ipc/ipc.h"
+#include <QAction>
 #include <QCloseEvent>
 #include <QListWidgetItem>
+#include <QMenu>
 #include <QMessageBox>
 #include <QScrollBar>
+
+static DemoWidget::Mode modes[] = {
+	DemoWidget::Mode::LL_ProductionList, DemoWidget::Mode::LL_FirstTable,
+	DemoWidget::Mode::LL_FollowTable,	 DemoWidget::Mode::LL_FirstFollowTable,
+	DemoWidget::Mode::LL_SelectTable,	 DemoWidget::Mode::LL_AutomationTable,
+};
+
+static QString modeStrings[] = {"产生式列表",		"First 集",	 "Follow 集",
+								"First、Follow 集", "Select 集", "自动机"};
 
 DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code, bool withTranslate)
 	: QMainWindow(), ui(new Ui::DemoLLWindow) {
@@ -18,20 +29,13 @@ DemoLLAlogrithmWindow::DemoLLAlogrithmWindow(QString code, bool withTranslate)
 			&DemoLLAlogrithmWindow::stepButtonTrigger);
 	connect(ui->runToCursorButton, &QToolButton::clicked, this,
 			&DemoLLAlogrithmWindow::runToCursorTrigger);
+	connect(ui->keyWidget, &QWidget::customContextMenuRequested, this,
+			&DemoLLAlogrithmWindow::contextMenu);
 
-	DemoWidget::Mode modes[] = {
-		DemoWidget::Mode::LL_ProductionList,
-		DemoWidget::Mode::LL_FirstTable,
-		DemoWidget::Mode::LL_FollowTable,
-		DemoWidget::Mode::LL_FirstFollowTable,
-		DemoWidget::Mode::LL_SelectTable,
-		DemoWidget::Mode::LL_AutomationTable,
-	};
 	for (auto mode : modes) {
 		auto widget = new DemoWidget();
 		widget->setMode(mode);
 		widget->translateDefault();
-		widget->show();
 		demoWidgets << widget;
 	}
 
@@ -60,6 +64,28 @@ DemoLLAlogrithmWindow::~DemoLLAlogrithmWindow() {
 void DemoLLAlogrithmWindow::closeEvent(QCloseEvent *event) {
 	event->accept();
 	deleteLater();
+}
+
+void DemoLLAlogrithmWindow::contextMenu() {
+	QMenu menu(ui->keyWidget);
+	menu.addAction("独立窗口显示")->setEnabled(false);
+	menu.addSeparator();
+	for (int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+		auto m = modeStrings[i];
+		auto action = menu.addAction(m);
+		action->setCheckable(true);
+		if (!demoWidgets[i]->isHidden()) {
+			action->setChecked(true);
+		}
+		connect(action, &QAction::triggered, [=] {
+			if (demoWidgets[i]->isHidden()) {
+				demoWidgets[i]->show();
+			} else {
+				demoWidgets[i]->hide();
+			}
+		});
+	}
+	menu.exec(QCursor::pos());
 }
 
 void DemoLLAlogrithmWindow::setProcessBreakpoint(bool withSelectLine) {

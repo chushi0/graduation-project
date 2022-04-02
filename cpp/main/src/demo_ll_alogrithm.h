@@ -23,6 +23,7 @@ private slots:
 	void runButtonTrigger();
 	void stepButtonTrigger();
 	void runToCursorTrigger();
+	void contextMenu();
 
 private:
 	enum ProcessStatus { Run, Pause, Exit };

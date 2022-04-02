@@ -23,7 +23,7 @@
       <widget class="QWidget" name="scrollAreaWidgetContents">
        <property name="geometry">
         <rect>
-         <x>-379</x>
+         <x>0</x>
          <y>0</y>
          <width>1080</width>
          <height>59</height>
@@ -209,6 +209,9 @@
           </property>
           <property name="cursor">
            <cursorShape>OpenHandCursor</cursorShape>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
           </property>
          </widget>
         </widget>
