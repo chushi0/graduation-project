@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ipc/types.h"
+#include "../util/layout.h"
 #include <QWidget>
 
 class DemoWidget : public QWidget {
@@ -13,6 +14,12 @@ public:
 		LL_FirstFollowTable,
 		LL_SelectTable,
 		LL_AutomationTable,
+		LR0_ProductionList,
+		LR0_FirstTable,
+		LR0_FollowTable,
+		LR0_FirstFollowTable,
+		LR0_ItemClosure,
+		LR0_AutomationTable,
 	};
 
 public:
@@ -40,10 +47,16 @@ private:
 	ipc::LR1BreakpointVariables lr1Variable;
 	ipc::Breakpoint point;
 	Mode mode;
+	bool variableRefresh;
 
 	float x, y;
 	float lastMouseX, lastMouseY;
 	bool mousePressed;
+
+	// LR0 ItemClosure cache
+
+	QList<layout::Point> points;
+	QList<layout::Edge> edges;
 
 private:
 	struct PaintContext {
@@ -59,6 +72,12 @@ private:
 	void drawimpl_LL_FirstFollowTable(const PaintContext &ctx);
 	void drawimpl_LL_SelectTable(const PaintContext &ctx);
 	void drawimpl_LL_AutomationTable(const PaintContext &ctx);
+	void drawimpl_LR0_ProductionList(const PaintContext &ctx);
+	void drawimpl_LR0_FirstTable(const PaintContext &ctx);
+	void drawimpl_LR0_FollowTable(const PaintContext &ctx);
+	void drawimpl_LR0_FirstFollowTable(const PaintContext &ctx);
+	void drawimpl_LR0_ItemClosure(const PaintContext &ctx);
+	void drawimpl_LR0_AutomationTable(const PaintContext &ctx);
 
 	void paintTable(const PaintContext &ctx, int x, int y,
 					QList<QStringList> content,
@@ -77,4 +96,19 @@ private:
 								QList<ipc::ReplaceProduction> replaceList,
 								QList<QStringList> addProduction);
 	QString prodToString(QStringList prod);
+	QRect computeProductionCellBounding(const PaintContext &ctx,
+										QStringList production, int index);
+	void computeItemLayout(const PaintContext &ctx,
+						   const ipc::LRItemClosureMap &closureMap,
+						   const QList<QStringList> &productions,
+						   QList<layout::Point> &points,
+						   QList<layout::Edge> &edges);
+	void computeItemWidthAndHeight(const PaintContext &ctx,
+								   ipc::LRItemClosure item,
+								   layout::Point &point,
+								   const QList<QStringList> &productions);
+	int computeItemWidth(const PaintContext &ctx, ipc::LRItem item,
+						 const QList<QStringList> &productions);
+	QString itemToString(const ipc::LRItem &item,
+						 const QList<QStringList> &productions);
 };

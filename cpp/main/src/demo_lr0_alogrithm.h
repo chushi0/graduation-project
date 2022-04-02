@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui_demo_lr0_window.h"
+#include "widget/DemoWidget.h"
 #include <QLabel>
 #include <QMainWindow>
 #include <QProgressBar>
@@ -22,6 +23,7 @@ private slots:
 	void runButtonTrigger();
 	void stepButtonTrigger();
 	void runToCursorTrigger();
+	void contextMenu();
 
 private:
 	enum ProcessStatus { Run, Pause, Exit };
@@ -33,6 +35,7 @@ private:
 	QString processId;
 	ProcessStatus status;
 	QString currentFunction;
+	QList<DemoWidget *> demoWidgets;
 
 private:
 	void setProcessBreakpoint(bool withSelectLine = false);
