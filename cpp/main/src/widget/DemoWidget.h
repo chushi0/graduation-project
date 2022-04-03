@@ -20,6 +20,10 @@ public:
 		LR0_FirstFollowTable,
 		LR0_ItemClosure,
 		LR0_AutomationTable,
+		LR1_ProductionList,
+		LR1_FirstTable,
+		LR1_ItemClosure,
+		LR1_AutomationTable,
 	};
 
 public:
@@ -33,6 +37,8 @@ public:
 							 const ipc::Breakpoint &point);
 	void setVariableAndPoint(const ipc::LR1BreakpointVariables &variable,
 							 const ipc::Breakpoint &point);
+
+public slots:
 	void translateDefault();
 
 protected:
@@ -40,6 +46,7 @@ protected:
 	virtual void mousePressEvent(QMouseEvent *) override;
 	virtual void mouseReleaseEvent(QMouseEvent *) override;
 	virtual void mouseMoveEvent(QMouseEvent *) override;
+	virtual void contextMenuEvent(QContextMenuEvent *event);
 
 private:
 	ipc::LLBreakpointVariables llVariable;
@@ -78,6 +85,10 @@ private:
 	void drawimpl_LR0_FirstFollowTable(const PaintContext &ctx);
 	void drawimpl_LR0_ItemClosure(const PaintContext &ctx);
 	void drawimpl_LR0_AutomationTable(const PaintContext &ctx);
+	void drawimpl_LR1_ProductionList(const PaintContext &ctx);
+	void drawimpl_LR1_FirstTable(const PaintContext &ctx);
+	void drawimpl_LR1_ItemClosure(const PaintContext &ctx);
+	void drawimpl_LR1_AutomationTable(const PaintContext &ctx);
 
 	void paintTable(const PaintContext &ctx, int x, int y,
 					QList<QStringList> content,

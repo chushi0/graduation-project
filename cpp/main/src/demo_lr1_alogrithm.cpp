@@ -1,10 +1,22 @@
 #include "demo_lr1_alogrithm.h"
 #include "ipc/base.h"
 #include "ipc/ipc.h"
+#include <QAction>
 #include <QCloseEvent>
 #include <QListWidgetItem>
+#include <QMenu>
 #include <QMessageBox>
 #include <QScrollBar>
+
+static DemoWidget::Mode modes[] = {
+	DemoWidget::Mode::LR1_ProductionList,
+	DemoWidget::Mode::LR1_FirstTable,
+	DemoWidget::Mode::LR1_ItemClosure,
+	DemoWidget::Mode::LR1_AutomationTable,
+};
+
+static QString modeStrings[] = {"产生式列表", "First 集", "项目集闭包",
+								"自动机"};
 
 DemoLR1AlogrithmWindow::DemoLR1AlogrithmWindow(QString code, bool lalr)
 	: QMainWindow(), ui(new Ui::DemoLR1Window) {
@@ -18,6 +30,15 @@ DemoLR1AlogrithmWindow::DemoLR1AlogrithmWindow(QString code, bool lalr)
 			&DemoLR1AlogrithmWindow::stepButtonTrigger);
 	connect(ui->runToCursorButton, &QToolButton::clicked, this,
 			&DemoLR1AlogrithmWindow::runToCursorTrigger);
+	connect(ui->keyWidget, &QWidget::customContextMenuRequested, this,
+			&DemoLR1AlogrithmWindow::contextMenu);
+
+	for (auto mode : modes) {
+		auto widget = new DemoWidget();
+		widget->setMode(mode);
+		widget->translateDefault();
+		demoWidgets << widget;
+	}
 
 	processId = ipc::LR1ProcessRequest(code, lalr);
 	setProcessBreakpoint();
@@ -32,9 +53,35 @@ DemoLR1AlogrithmWindow::DemoLR1AlogrithmWindow(QString code, bool lalr)
 
 DemoLR1AlogrithmWindow::~DemoLR1AlogrithmWindow() {
 	delete ui;
+	for (auto widget : demoWidgets) {
+		widget->close();
+		widget->deleteLater();
+	}
 	if (!processId.isEmpty()) {
 		ipc::LR1ProcessRelease(processId);
 	}
+}
+
+void DemoLR1AlogrithmWindow::contextMenu() {
+	QMenu menu(ui->keyWidget);
+	menu.addAction("独立窗口显示")->setEnabled(false);
+	menu.addSeparator();
+	for (int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+		auto m = modeStrings[i];
+		auto action = menu.addAction(m);
+		action->setCheckable(true);
+		if (!demoWidgets[i]->isHidden()) {
+			action->setChecked(true);
+		}
+		connect(action, &QAction::triggered, [=] {
+			if (demoWidgets[i]->isHidden()) {
+				demoWidgets[i]->show();
+			} else {
+				demoWidgets[i]->hide();
+			}
+		});
+	}
+	menu.exec(QCursor::pos());
 }
 
 void DemoLR1AlogrithmWindow::closeEvent(QCloseEvent *event) {
@@ -52,6 +99,9 @@ void DemoLR1AlogrithmWindow::processCheck() {
 	if (paused) {
 		status = Pause;
 		ui->keyWidget->setVariableAndPoint(vars, point);
+		for (auto widget : demoWidgets) {
+			widget->setVariableAndPoint(vars, point);
+		}
 		setupPoint(point);
 		return;
 	}
