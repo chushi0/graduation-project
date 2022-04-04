@@ -227,7 +227,7 @@ void MainWindow::actionCodeLR0() {
 	startCodeProcess();
 	lr0ProcessId =
 		ipc::LR0ProcessRequest(ui->codeView->text(), false, fileName);
-	ipc::LR0ProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	ipc::LR0ProcessSwitchMode(lr0ProcessId, ipc::ProcessModeRun);
 	checkLR0Process();
 }
 
@@ -241,7 +241,7 @@ void MainWindow::actionCodeSLR() {
 	}
 	startCodeProcess();
 	lr0ProcessId = ipc::LR0ProcessRequest(ui->codeView->text(), true, fileName);
-	ipc::LR0ProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	ipc::LR0ProcessSwitchMode(lr0ProcessId, ipc::ProcessModeRun);
 	checkLR0Process();
 }
 
@@ -256,7 +256,7 @@ void MainWindow::actionCodeLR1() {
 	startCodeProcess();
 	lr1ProcessId =
 		ipc::LR1ProcessRequest(ui->codeView->text(), false, fileName);
-	ipc::LR1ProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	ipc::LR1ProcessSwitchMode(lr1ProcessId, ipc::ProcessModeRun);
 	checkLR1Process();
 }
 
@@ -270,7 +270,7 @@ void MainWindow::actionCodeLALR() {
 	}
 	startCodeProcess();
 	lr1ProcessId = ipc::LR1ProcessRequest(ui->codeView->text(), true, fileName);
-	ipc::LR1ProcessSwitchMode(llProcessId, ipc::ProcessModeRun);
+	ipc::LR1ProcessSwitchMode(lr1ProcessId, ipc::ProcessModeRun);
 	checkLR1Process();
 }
 
@@ -374,7 +374,7 @@ void MainWindow::checkLLProcess() {
 }
 
 void MainWindow::checkLR0Process() {
-	if (llProcessId.isEmpty()) {
+	if (lr0ProcessId.isEmpty()) {
 		return;
 	}
 	ipc::LR0ExitResult result;
@@ -406,7 +406,7 @@ void MainWindow::checkLR0Process() {
 }
 
 void MainWindow::checkLR1Process() {
-	if (llProcessId.isEmpty()) {
+	if (lr1ProcessId.isEmpty()) {
 		return;
 	}
 	ipc::LR1ExitResult result;
