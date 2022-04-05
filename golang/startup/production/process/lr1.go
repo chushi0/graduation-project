@@ -485,7 +485,7 @@ func (ctx *LR1Context) GenerateAutomaton() {
 	}
 	ctx.bury("GenerateAutomaton", -1)
 
-	if conflict {
+	if conflict && (!ctx.CodeSaver.Enable || !*golang) {
 		ctx.shutdownPipeline(&LR1Result{
 			Code: LR1_Error_Conflict,
 		})
@@ -496,10 +496,11 @@ func (ctx *LR1Context) SetAutomatonReduce(closure int, terminal string, reduce s
 	if ctx.KeyVariables.ActionTable[closure][terminal] != "" {
 		switch ctx.KeyVariables.ActionTable[closure][terminal][0] {
 		case 'r', 'a':
-			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ReduceReduce
+			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ReduceReduce + " " + ctx.KeyVariables.ActionTable[closure][terminal]
 		case 's':
-			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ShiftReduce
+			ctx.KeyVariables.ActionTable[closure][terminal] = LR0_Action_ShiftReduce + " " + ctx.KeyVariables.ActionTable[closure][terminal]
 		}
+		ctx.KeyVariables.ActionTable[closure][terminal] += "/" + reduce
 		return false
 	}
 
@@ -854,7 +855,63 @@ func Parse(parser IYaccParser) (bool, *YaccCompileError) {
 `)
 	for state := range ctx.KeyVariables.ClosureMap.Closures {
 		goBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
-		goBufWrite.WriteString("\t\t\t\tswitch token {\n")
+		goBufWrite.WriteString(fmt.Sprintf("\t\t\t\tres, err := yacc_action_%d(&stateStack, &symbolStack, &token, parser)", state))
+		goBufWrite.WriteString(`
+				if res == 0 {
+					goto stat
+				} else if res == 1 {
+					return true, nil
+				} else if res == 2 {
+					return false, err
+				}
+`)
+	}
+	goBufWrite.WriteString("\t\t}\n")
+	goBufWrite.WriteString("\t\tswitch stateStack[len(stateStack)-1] {\n")
+	for state := range ctx.KeyVariables.ClosureMap.Closures {
+		if !ctx.checkGotoTableAvailable(state) {
+			continue
+		}
+		goBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
+		goBufWrite.WriteString(fmt.Sprintf("\t\t\t\tstate, err := yacc_goto_%d(symbolStack[len(symbolStack)-1])", state))
+		goBufWrite.WriteString(`
+			if err != nil {
+				parser.Panic(err)
+				return false, err
+			}
+			stateStack = append(stateStack, state)
+`)
+	}
+	goBufWrite.WriteString(`			default: {
+			expected := []int{}
+			compileError := YaccCompileError{
+				expected, stateStack[len(stateStack)-1],
+			}
+			parser.Panic(&compileError)
+			return false, &compileError
+		}
+	}
+}
+}`)
+
+	for state, closure := range ctx.KeyVariables.ClosureMap.Closures {
+		goBufWrite.WriteString(fmt.Sprintf("\nfunc yacc_action_%d(stateStack, symbolStack *[]int, token *int, parser IYaccParser) (int, *YaccCompileError) {\n", state))
+		for _, item := range *closure {
+			prod := ctx.KeyVariables.Productions[item.Prod]
+			str := prod[0] + " :="
+			for i := 1; i < len(prod); i++ {
+				if item.Progress+1 == i {
+					str += " ·"
+				}
+				str += " " + prod[i]
+			}
+			if item.Progress+1 == len(prod) {
+				str += " ·"
+			}
+			str += " , " + item.Lookahead
+			goBufWrite.WriteString(fmt.Sprintf("\t// %s\n", str))
+		}
+		goBufWrite.WriteString("\t\t\t\tswitch *token {\n")
 		allSelect := make([]string, 0)
 		// action
 		for terminal, action := range ctx.KeyVariables.ActionTable[state] {
@@ -874,24 +931,27 @@ func Parse(parser IYaccParser) (bool, *YaccCompileError) {
 				// 归约开始产生式
 				prod := (*ctx.KeyVariables.ClosureMap.Closures[0])[0].Prod
 				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser.Reduce(%d)\n", prod))
-				goBufWrite.WriteString("\t\t\t\t\t\treturn true, nil\n")
+				goBufWrite.WriteString("\t\t\t\t\t\treturn 1, nil\n")
 			case 's':
 				// 移入，并转移到其他状态
-				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack = append(stateStack, %s)\n", action[1:]))
-				goBufWrite.WriteString("\t\t\t\t\t\tsymbolStack = append(symbolStack, token)\n")
+				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\t*stateStack = append(*stateStack, %s)\n", action[1:]))
+				goBufWrite.WriteString("\t\t\t\t\t\t*symbolStack = append(*symbolStack, *token)\n")
 				goBufWrite.WriteString("\t\t\t\t\t\tparser.Shift()\n")
-				goBufWrite.WriteString("\t\t\t\t\t\ttoken = parser.Next()\n")
-				goBufWrite.WriteString("\t\t\t\t\t\tgoto stat\n")
+				goBufWrite.WriteString("\t\t\t\t\t\t*token = parser.Next()\n")
+				goBufWrite.WriteString("\t\t\t\t\t\treturn 0, nil\n")
 			case 'r':
 				// 归约
 				prod, _ := strconv.Atoi(action[1:])
 				count := len(ctx.KeyVariables.Productions[prod]) - 1
 				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser.Reduce(%s)\n", action[1:]))
 				if count != 0 {
-					goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack = stateStack[:len(stateStack)-%d]\n", count))
-					goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack = symbolStack[:len(symbolStack)-%d]\n", count))
+					goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\t*stateStack = (*stateStack)[:len(*stateStack)-%d]\n", count))
+					goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\t*symbolStack = (*symbolStack)[:len(*symbolStack)-%d]\n", count))
 				}
-				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack = append(symbolStack, Nonterminal_%s)\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
+				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\t*symbolStack = append(*symbolStack, Nonterminal_%s)\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
+				goBufWrite.WriteString("\t\t\t\t\t\treturn 3, nil\n")
+			default:
+				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tpanic(\"%s\")\n", action))
 			}
 		}
 		goBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\texpected := []int{")
@@ -902,23 +962,22 @@ func Parse(parser IYaccParser) (bool, *YaccCompileError) {
 			goBufWrite.WriteString(v)
 		}
 		goBufWrite.WriteString(`}
-					compileError := YaccCompileError{
-						expected, token,
-					}
-					parser.Panic(&compileError)
-					return false, &compileError
-				}
+			compileError := YaccCompileError{
+				expected, *token,
 			}
+			parser.Panic(&compileError)
+			return 2, &compileError
+		}
+	}
+}
 `)
 	}
-	goBufWrite.WriteString("\t\t}\n")
-	goBufWrite.WriteString("\t\tswitch stateStack[len(stateStack)-1] {\n")
 	for state := range ctx.KeyVariables.ClosureMap.Closures {
 		if !ctx.checkGotoTableAvailable(state) {
 			continue
 		}
-		goBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
-		goBufWrite.WriteString("\t\t\t\tswitch symbolStack[len(symbolStack)-1] {\n")
+		goBufWrite.WriteString(fmt.Sprintf("\nfunc yacc_goto_%d(symbol int) (int, *YaccCompileError) {\n", state))
+		goBufWrite.WriteString("\t\t\t\tswitch symbol {\n")
 		allSelect := make([]string, 0)
 		// goto
 		for terminal, nextState := range ctx.KeyVariables.GotoTable[state] {
@@ -927,7 +986,7 @@ func Parse(parser IYaccParser) (bool, *YaccCompileError) {
 			}
 			allSelect = append(allSelect, fmt.Sprintf("Nonterminal_%s", serials.Map[terminal].SerialString))
 			goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Nonterminal_%s:\n", serials.Map[terminal].SerialString))
-			goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack = append(stateStack, %d)\n", nextState))
+			goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\treturn %d, nil\n", nextState))
 		}
 		goBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\texpected := []int{")
 		for i, v := range allSelect {
@@ -937,26 +996,15 @@ func Parse(parser IYaccParser) (bool, *YaccCompileError) {
 			goBufWrite.WriteString(v)
 		}
 		goBufWrite.WriteString(`}
-					compileError := YaccCompileError{
-						expected, stateStack[len(stateStack)-1],
-					}
-					parser.Panic(&compileError)
-					return false, &compileError
+				compileError := YaccCompileError{
+					expected, symbol,
 				}
+				return 0, &compileError
 			}
-`)
-	}
-	goBufWrite.WriteString(`			default: {
-			expected := []int{}
-			compileError := YaccCompileError{
-				expected, stateStack[len(stateStack)-1],
-			}
-			parser.Panic(&compileError)
-			return false, &compileError
 		}
 	}
-}
-}`)
+`)
+	}
 }
 
 func (ctx *LR1Context) checkGotoTableAvailable(state int) bool {
