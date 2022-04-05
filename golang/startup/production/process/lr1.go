@@ -107,6 +107,9 @@ func (ctx *LR1Context) RunPipeline() {
 		ctx.ClearUnusedItemClosure()
 	}
 	ctx.GenerateAutomaton()
+	if ctx.CodeSaver.Enable {
+		ctx.GenerateYaccCode()
+	}
 }
 
 // 按照一定顺序排列非终结符
