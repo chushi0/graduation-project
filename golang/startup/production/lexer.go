@@ -553,48 +553,37 @@ func (fa *FiniteAutomaton) closureSet(states set.IntSet) set.IntSet {
 // 分割所有字符范围
 func (fa *FiniteAutomaton) splitRange() []*RuneRange {
 	ranges := make([]*RuneRange, 0)
+	points := set.NewIntSet()
+	pointSlice := make([]int, 0)
 	for _, jumpTable := range fa.JumpTables {
 		for _, jumpMap := range jumpTable {
 			if jumpMap.isEpsilon() {
 				continue
 			}
-			done := false
-			for i, rng := range ranges {
-				if jumpMap.RuneRange == *rng {
-					done = true
-					break
-				}
-				if jumpMap.isIntersect(rng) {
-					last := len(ranges) - 1
-					ranges[i], ranges[last] = ranges[last], ranges[i]
-					ranges = append(ranges[:last], jumpMap.splitWith(ranges[last])...)
-					done = true
-					break
-				}
-			}
-			if !done {
-				ranges = append(ranges, &RuneRange{
-					RuneStart: jumpMap.RuneStart,
-					RuneEnd:   jumpMap.RuneEnd,
-				})
-			}
+			points.Put(int(jumpMap.RuneStart), int(jumpMap.RuneEnd))
 		}
 	}
-	sort.Slice(ranges, func(i, j int) bool {
-		return ranges[i].RuneStart < ranges[j].RuneStart
-	})
-	duplicateRemoval := make([]*RuneRange, 0)
-	for _, item := range ranges {
-		if len(duplicateRemoval) == 0 {
-			duplicateRemoval = append(duplicateRemoval, item)
-			continue
-		}
-		if duplicateRemoval[len(duplicateRemoval)-1].RuneStart == item.RuneStart {
-			continue
-		}
-		duplicateRemoval = append(duplicateRemoval, item)
+	for p := range points {
+		pointSlice = append(pointSlice, p)
 	}
-	return duplicateRemoval
+	sort.Ints(pointSlice)
+	for i := 0; i < len(pointSlice)-1; i++ {
+		rng := RuneRange{rune(pointSlice[i]), rune(pointSlice[i+1])}
+		for _, jumpTable := range fa.JumpTables {
+			for _, jumpMap := range jumpTable {
+				if jumpMap.isEpsilon() {
+					continue
+				}
+				if jumpMap.isIntersect(&rng) {
+					goto intersect
+				}
+			}
+		}
+		continue
+	intersect:
+		ranges = append(ranges, &rng)
+	}
+	return ranges
 }
 
 // NFA 转 DFA

@@ -508,6 +508,10 @@ func (ctx *LR1Context) SetAutomatonReduce(closure int, terminal string, reduce s
 }
 
 func (ctx *LR1Context) GenerateYaccCode() {
+	if *golang {
+		ctx.GenerateGolangYaccCode()
+		return
+	}
 	ctx.KeyVariables.CodePath = ctx.GetSourcePath()
 	serials := NewSerialTokens()
 	prodSerials := make([]string, len(ctx.KeyVariables.Productions))
@@ -757,6 +761,201 @@ bool Parse(IParser* parser)
 			}
 		}
 	}
+}`)
+}
+
+func (ctx *LR1Context) GenerateGolangYaccCode() {
+	ctx.KeyVariables.CodePath = ctx.GetGolangPath()
+	serials := NewSerialTokens()
+	prodSerials := make([]string, len(ctx.KeyVariables.Productions))
+	goFile, _ := os.Create(ctx.GetGolangPath())
+	goBufWrite := bufio.NewWriter(goFile)
+	defer func() {
+		goBufWrite.Flush()
+		goFile.Close()
+	}()
+
+	goBufWrite.WriteString(`
+
+type YaccCompileError struct {
+	Exected []int
+	Actual  int
+}
+
+type IYaccParser interface {
+	Next() int
+	Shift()
+	Reduce(int)
+	Panic(*YaccCompileError)
+}
+
+`)
+
+	goBufWrite.WriteString("const (")
+
+	// 写入原始代码
+	goBufWrite.WriteString("\n\t// Production Definition Code\n")
+	for _, line := range strings.Split(ctx.Code, "\n") {
+		goBufWrite.WriteString(fmt.Sprintf("\t// %s\n", line))
+	}
+
+	// 写入终结符定义
+	goBufWrite.WriteString(`
+	// Terminals Definition
+	TerminalEOF = -1
+`)
+	for terminal := range ctx.Grammer.Terminals {
+		serials.Put(terminal)
+		token := serials.Map[terminal]
+		goBufWrite.WriteString(fmt.Sprintf("\tTerminal_%s = %d // %s\n", token.SerialString, token.Index, terminal))
+	}
+
+	// 写入非终结符定义
+	goBufWrite.WriteString(`
+	// Nonterminals Definition
+`)
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		serials.Put(nonterminal)
+		token := serials.Map[nonterminal]
+		goBufWrite.WriteString(fmt.Sprintf("\tNonterminal_%s = %d // %s\n", token.SerialString, token.Index, nonterminal))
+	}
+
+	// 写入产生式定义
+	goBufWrite.WriteString(`
+	// Productions Definition
+`)
+	for i, prod := range ctx.KeyVariables.Productions {
+		prodSerials[i] = serials.Map[prod[0]].SerialString
+		for j := 1; j < len(prod); j++ {
+			prodSerials[i] += "_" + serials.Map[prod[j]].SerialString
+		}
+	}
+	for i, prod := range ctx.KeyVariables.Productions {
+		goBufWrite.WriteString(fmt.Sprintf("\tProduction_%s = %d // ", prodSerials[i], i))
+		goBufWrite.WriteString(prod[0])
+		goBufWrite.WriteString(" :=")
+		for j := 1; j < len(prod); j++ {
+			goBufWrite.WriteString(" ")
+			goBufWrite.WriteString(prod[j])
+		}
+		goBufWrite.WriteString("\n")
+	}
+	goBufWrite.WriteString(")\n")
+
+	goBufWrite.WriteString(`
+func Parse(parser IYaccParser) (bool, *YaccCompileError) {
+	stateStack := make([]int, 0)
+	symbolStack := make([]int, 0)
+	stateStack = append(stateStack, 0)
+	token := parser.Next()
+	for {
+	stat:
+		switch stateStack[len(stateStack)-1] {
+`)
+	for state := range ctx.KeyVariables.ClosureMap.Closures {
+		goBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
+		goBufWrite.WriteString("\t\t\t\tswitch token {\n")
+		allSelect := make([]string, 0)
+		// action
+		for terminal, action := range ctx.KeyVariables.ActionTable[state] {
+			if action == "" {
+				continue
+			}
+			if terminal == "$" {
+				allSelect = append(allSelect, "TerminalEOF")
+				goBufWrite.WriteString("\t\t\t\t\tcase TerminalEOF:\n")
+			} else {
+				allSelect = append(allSelect, fmt.Sprintf("Terminal_%s", serials.Map[terminal].SerialString))
+				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Terminal_%s:\n", serials.Map[terminal].SerialString))
+			}
+			goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\t// %s\n", action))
+			switch action[0] {
+			case 'a': // acc
+				// 归约开始产生式
+				prod := (*ctx.KeyVariables.ClosureMap.Closures[0])[0].Prod
+				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser.Reduce(%d)\n", prod))
+				goBufWrite.WriteString("\t\t\t\t\t\treturn true, nil\n")
+			case 's':
+				// 移入，并转移到其他状态
+				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack = append(stateStack, %s)\n", action[1:]))
+				goBufWrite.WriteString("\t\t\t\t\t\tsymbolStack = append(symbolStack, token)\n")
+				goBufWrite.WriteString("\t\t\t\t\t\tparser.Shift()\n")
+				goBufWrite.WriteString("\t\t\t\t\t\ttoken = parser.Next()\n")
+				goBufWrite.WriteString("\t\t\t\t\t\tgoto stat\n")
+			case 'r':
+				// 归约
+				prod, _ := strconv.Atoi(action[1:])
+				count := len(ctx.KeyVariables.Productions[prod]) - 1
+				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser.Reduce(%s)\n", action[1:]))
+				if count != 0 {
+					goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack = stateStack[:len(stateStack)-%d]\n", count))
+					goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack = symbolStack[:len(symbolStack)-%d]\n", count))
+				}
+				goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack = append(symbolStack, Nonterminal_%s)\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
+			}
+		}
+		goBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\texpected := []int{")
+		for i, v := range allSelect {
+			if i > 0 {
+				goBufWrite.WriteString(", ")
+			}
+			goBufWrite.WriteString(v)
+		}
+		goBufWrite.WriteString(`}
+					compileError := YaccCompileError{
+						expected, token,
+					}
+					parser.Panic(&compileError)
+					return false, &compileError
+				}
+			}
+`)
+	}
+	goBufWrite.WriteString("\t\t}\n")
+	goBufWrite.WriteString("\t\tswitch stateStack[len(stateStack)-1] {\n")
+	for state := range ctx.KeyVariables.ClosureMap.Closures {
+		if !ctx.checkGotoTableAvailable(state) {
+			continue
+		}
+		goBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
+		goBufWrite.WriteString("\t\t\t\tswitch symbolStack[len(symbolStack)-1] {\n")
+		allSelect := make([]string, 0)
+		// goto
+		for terminal, nextState := range ctx.KeyVariables.GotoTable[state] {
+			if nextState == -1 {
+				continue
+			}
+			allSelect = append(allSelect, fmt.Sprintf("Nonterminal_%s", serials.Map[terminal].SerialString))
+			goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Nonterminal_%s:\n", serials.Map[terminal].SerialString))
+			goBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack = append(stateStack, %d)\n", nextState))
+		}
+		goBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\texpected := []int{")
+		for i, v := range allSelect {
+			if i > 0 {
+				goBufWrite.WriteString(", ")
+			}
+			goBufWrite.WriteString(v)
+		}
+		goBufWrite.WriteString(`}
+					compileError := YaccCompileError{
+						expected, stateStack[len(stateStack)-1],
+					}
+					parser.Panic(&compileError)
+					return false, &compileError
+				}
+			}
+`)
+	}
+	goBufWrite.WriteString(`			default: {
+			expected := []int{}
+			compileError := YaccCompileError{
+				expected, stateStack[len(stateStack)-1],
+			}
+			parser.Panic(&compileError)
+			return false, &compileError
+		}
+	}
+}
 }`)
 }
 

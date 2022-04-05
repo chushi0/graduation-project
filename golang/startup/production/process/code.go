@@ -1,6 +1,11 @@
 package process
 
-import "strings"
+import (
+	"flag"
+	"strings"
+)
+
+var golang = flag.Bool("golang", false, "")
 
 type CodeSaver struct {
 	Enable   bool
@@ -22,6 +27,10 @@ func (s *CodeSaver) GetHeaderPath() string {
 
 func (s *CodeSaver) GetSourcePath() string {
 	return s.SavePath + ".cpp"
+}
+
+func (s *CodeSaver) GetGolangPath() string {
+	return s.SavePath + ".go"
 }
 
 func (s *CodeSaver) GetIncludeName() string {
