@@ -342,7 +342,7 @@ func (ctx *LR1Context) subFirst(prod []string, start int, lookahead string) set.
 
 func (ctx *LR1Context) MergeItemClosure() {
 	ctx.KeyVariables.LALRDropClosures = set.NewIntSet()
-	for i := range ctx.KeyVariables.ClosureMap.Closures {
+	for i := 0; i < len(ctx.KeyVariables.ClosureMap.Closures); i++ {
 		if ctx.KeyVariables.LALRDropClosures.Contains(i) {
 			continue
 		}
@@ -401,7 +401,7 @@ func (ctx *LR1Context) mergeItemClosure(dst, src int) {
 	for _, item := range *ctx.KeyVariables.ClosureMap.Closures[src] {
 		found := false
 		for _, anoitem := range *ctx.KeyVariables.ClosureMap.Closures[dst] {
-			if item.Prod == anoitem.Prod && item.Progress == anoitem.Progress {
+			if item.Prod == anoitem.Prod && item.Progress == anoitem.Progress && item.Lookahead == anoitem.Lookahead {
 				found = true
 				break
 			}
