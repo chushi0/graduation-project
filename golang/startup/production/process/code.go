@@ -6,6 +6,7 @@ import (
 )
 
 var golang = flag.Bool("golang", false, "")
+var comment = flag.Bool("comment", false, "")
 
 type CodeSaver struct {
 	Enable   bool

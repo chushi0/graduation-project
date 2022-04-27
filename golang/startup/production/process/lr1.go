@@ -844,43 +844,51 @@ type IYaccParser interface {
 	goBufWrite.WriteString(")\n")
 
 	goBufWrite.WriteString(`
+func ProductionRightCount(production int) int {
+	switch production {
+`)
+	for i, prod := range ctx.KeyVariables.Productions {
+		goBufWrite.WriteString(fmt.Sprintf("\t\tcase Production_%s:\n", prodSerials[i]))
+		goBufWrite.WriteString(fmt.Sprintf("\t\t\treturn %d\n", len(prod)-1))
+	}
+	goBufWrite.WriteString(`	}
+	return -1
+}
+`)
+
+	goBufWrite.WriteString(`
 func Parse(parser IYaccParser) (bool, *YaccCompileError) {
 	stateStack := make([]int, 0)
 	symbolStack := make([]int, 0)
 	stateStack = append(stateStack, 0)
 	token := parser.Next()
+	var res int
+	var err *YaccCompileError
 	for {
-	stat:
 		switch stateStack[len(stateStack)-1] {
 `)
 	for state := range ctx.KeyVariables.ClosureMap.Closures {
 		goBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
-		goBufWrite.WriteString(fmt.Sprintf("\t\t\t\tres, err := yacc_action_%d(&stateStack, &symbolStack, &token, parser)", state))
-		goBufWrite.WriteString(`
-				if res == 0 {
-					goto stat
-				} else if res == 1 {
-					return true, nil
-				} else if res == 2 {
-					return false, err
-				}
-`)
+		goBufWrite.WriteString(fmt.Sprintf("\t\t\t\tres, err = yacc_action_%d(&stateStack, &symbolStack, &token, parser)\n", state))
 	}
 	goBufWrite.WriteString("\t\t}\n")
+	goBufWrite.WriteString(`
+			if res == 0 {
+				continue
+			} else if res == 1 {
+				return true, nil
+			} else if res == 2 {
+				return false, err
+			}
+`)
 	goBufWrite.WriteString("\t\tswitch stateStack[len(stateStack)-1] {\n")
 	for state := range ctx.KeyVariables.ClosureMap.Closures {
 		if !ctx.checkGotoTableAvailable(state) {
 			continue
 		}
 		goBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
-		goBufWrite.WriteString(fmt.Sprintf("\t\t\t\tstate, err := yacc_goto_%d(symbolStack[len(symbolStack)-1])", state))
-		goBufWrite.WriteString(`
-			if err != nil {
-				parser.Panic(err)
-				return false, err
-			}
-			stateStack = append(stateStack, state)
-`)
+		goBufWrite.WriteString(fmt.Sprintf("\t\t\t\tres, err = yacc_goto_%d(symbolStack[len(symbolStack)-1])\n", state))
+
 	}
 	goBufWrite.WriteString(`			default: {
 			expected := []int{}
@@ -890,26 +898,34 @@ func Parse(parser IYaccParser) (bool, *YaccCompileError) {
 			parser.Panic(&compileError)
 			return false, &compileError
 		}
-	}
-}
 }`)
-
+	goBufWrite.WriteString(`
+			if err != nil {
+				parser.Panic(err)
+				return false, err
+			}
+			stateStack = append(stateStack, res)
+		}
+	}
+`)
 	for state, closure := range ctx.KeyVariables.ClosureMap.Closures {
 		goBufWrite.WriteString(fmt.Sprintf("\nfunc yacc_action_%d(stateStack, symbolStack *[]int, token *int, parser IYaccParser) (int, *YaccCompileError) {\n", state))
-		for _, item := range *closure {
-			prod := ctx.KeyVariables.Productions[item.Prod]
-			str := prod[0] + " :="
-			for i := 1; i < len(prod); i++ {
-				if item.Progress+1 == i {
+		if *comment {
+			for _, item := range *closure {
+				prod := ctx.KeyVariables.Productions[item.Prod]
+				str := prod[0] + " :="
+				for i := 1; i < len(prod); i++ {
+					if item.Progress+1 == i {
+						str += " ·"
+					}
+					str += " " + prod[i]
+				}
+				if item.Progress+1 == len(prod) {
 					str += " ·"
 				}
-				str += " " + prod[i]
+				str += " , " + item.Lookahead
+				goBufWrite.WriteString(fmt.Sprintf("\t// %s\n", str))
 			}
-			if item.Progress+1 == len(prod) {
-				str += " ·"
-			}
-			str += " , " + item.Lookahead
-			goBufWrite.WriteString(fmt.Sprintf("\t// %s\n", str))
 		}
 		goBufWrite.WriteString("\t\t\t\tswitch *token {\n")
 		allSelect := make([]string, 0)

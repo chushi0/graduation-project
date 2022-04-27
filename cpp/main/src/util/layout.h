@@ -6,6 +6,7 @@ namespace layout {
 	struct Point {
 		int x;		  // out
 		int y;		  // out
+		int ptr;	  // in out
 		int width;	  // in out
 		int height;	  // in out
 		int depth;	  // internal
@@ -28,4 +29,5 @@ namespace layout {
 
 	void layoutLRItemImage(QList<Point> &points, QList<Edge> &edges,
 						   int *imgWidth, int *imgHeight);
+
 } // namespace layout
