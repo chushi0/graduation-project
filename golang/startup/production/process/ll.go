@@ -637,6 +637,8 @@ func (ctx *LLContext) GenerateYaccCode() {
  * Auto-generate header file.
  * After you re-generate file, ALL YOUR CHANGE WILL BE LOST!
  */
+
+ #include <vector>
 `)
 	// 随机命名空间
 	randomNamespace := fmt.Sprintf("LL_%d_%d", rand.Int(), rand.Int())
@@ -709,6 +711,14 @@ namespace %s {
 		int Actual;
 	};
 
+	// ParseContext
+	struct ParserContext {
+		// current token
+		int *token;
+		// symbol stack
+		std::vector<int> *stack;
+	};
+
 	// Interface which can be easily defined by user
 	class IParser {
 	public:
@@ -716,8 +726,10 @@ namespace %s {
 		virtual int Next() = 0;
 		// Infer left nonterminal by production
 		virtual void Infer(int id) = 0;
-		// Error occurred when parse (parser will exit)
-		virtual void Panic(CompileError* error) = 0;
+		// Error occurred when parse
+		// return true means panic has been recovered;
+		// return false means panic cannot be recovered (parse function will return)
+		virtual bool Panic(ParserContext *ctx, CompileError* error) = 0;
 	};
 
 	// main entry parser
@@ -739,31 +751,18 @@ namespace %s {
  * all your change WILL BE LOST after you re-generate file.
  */
 #include "%s"
-#include <vector>
 `, ctx.GetIncludeName()))
 	cppBufWrite.WriteString(fmt.Sprintf(`
-#ifdef %s
-using namespace %s;
-#endif
 
 #ifdef %s
-bool %s::Parse(IParser* parser)
-#else
-bool Parse(IParser* parser)
+namespace %s {
 #endif
-`, randomNamespace, randomNamespace, randomNamespace, randomNamespace))
-	cppBufWrite.WriteString(fmt.Sprintf(`{
-	std::vector<int> stack;
-	stack.push_back(Nonterminal_%s);
-	int token = parser->Next();
-	while (stack.size() > 0) {
-		int last = stack.back();
-		stack.pop_back();
-		switch (last) {
-`, serials.Map[ctx.Grammer.StartNonterminal].SerialString))
+`, randomNamespace, randomNamespace))
+
 	for nonterminal := range ctx.Grammer.Nonterminals {
-		cppBufWrite.WriteString(fmt.Sprintf(`			case Nonterminal_%s:
-				switch (token) {
+		cppBufWrite.WriteString(fmt.Sprintf(`
+inline bool parse_%s(ParserContext* ctx, IParser* parser, bool *result) {
+	switch (*ctx->token) {
 `, serials.Map[nonterminal].SerialString))
 		allSelect := make([]string, 0)
 		for i, prod := range ctx.KeyVariables.Productions {
@@ -773,22 +772,22 @@ bool Parse(IParser* parser)
 			for terminal := range ctx.KeyVariables.SelectSet[i] {
 				allSelect = append(allSelect, terminal)
 				if terminal == "$" {
-					cppBufWrite.WriteString("\t\t\t\t\tcase TerminalEOF:\n")
+					cppBufWrite.WriteString("\t\tcase TerminalEOF:\n")
 				} else {
-					cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Terminal_%s:\n", serials.Map[terminal].SerialString))
+					cppBufWrite.WriteString(fmt.Sprintf("\t\tcase Terminal_%s:\n", serials.Map[terminal].SerialString))
 				}
 			}
-			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser->Infer(Production_%s);\n", prodSerials[i]))
+			cppBufWrite.WriteString(fmt.Sprintf("\t\t\tparser->Infer(Production_%s);\n", prodSerials[i]))
 			for j := len(prod) - 1; j > 0; j-- {
 				if ctx.Grammer.Nonterminals.Contains(prod[j]) {
-					cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstack.push_back(Nonterminal_%s);\n", serials.Map[prod[j]].SerialString))
+					cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->stack->push_back(Nonterminal_%s);\n", serials.Map[prod[j]].SerialString))
 				} else {
-					cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstack.push_back(Terminal_%s);\n", serials.Map[prod[j]].SerialString))
+					cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->stack->push_back(Terminal_%s);\n", serials.Map[prod[j]].SerialString))
 				}
 			}
-			cppBufWrite.WriteString("\t\t\t\t\t\tbreak;\n")
+			cppBufWrite.WriteString("\t\t\tbreak;\n")
 		}
-		cppBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\tint expected[] = {")
+		cppBufWrite.WriteString("\t\tdefault: {\n\t\t\tint expected[] = {")
 		for i, v := range allSelect {
 			if i > 0 {
 				cppBufWrite.WriteString(", ")
@@ -800,15 +799,36 @@ bool Parse(IParser* parser)
 			}
 		}
 		cppBufWrite.WriteString(`};
-						CompileError compileError = {
-							expected, sizeof(expected) / sizeof(int), token
-						};
-						parser->Panic(&compileError);
-						return false;
-					}
-				}
-				break;
+			CompileError compileError = {
+				expected, sizeof(expected) / sizeof(int), *ctx->token
+			};
+			*result = false;
+			return parser->Panic(ctx, &compileError);
+		}
+	}
+	return true;
+}
 `)
+	}
+
+	cppBufWrite.WriteString(fmt.Sprintf(`
+bool Parse(IParser* parser) {
+	std::vector<int> stack;
+	stack.push_back(Nonterminal_%s);
+	int token = parser->Next();
+	ParserContext ctx = { &token, &stack };
+	bool result = true;
+	while (stack.size() > 0) {
+		int last = stack.back();
+		stack.pop_back();
+		bool action = true;
+		switch (last) {
+`, serials.Map[ctx.Grammer.StartNonterminal].SerialString))
+	for nonterminal := range ctx.Grammer.Nonterminals {
+		cppBufWrite.WriteString(fmt.Sprintf(`			case Nonterminal_%s:
+				action = parse_%s(&ctx, parser, &result);
+				break;
+`, serials.Map[nonterminal].SerialString, serials.Map[nonterminal].SerialString))
 	}
 	cppBufWrite.WriteString(`			default: {
 				if (last == token) {
@@ -819,22 +839,30 @@ bool Parse(IParser* parser)
 				CompileError compileError = {
 					expected, sizeof(expected) / sizeof(int), token
 				};
-				parser->Panic(&compileError);
-				return false;
+				action = parser->Panic(&ctx, &compileError);
+				result = false;
 			}
         }
+		if (!action) {
+			return false;
+		}
     }
     if (token == TerminalEOF) {
-        return true;
+        return result;
     }
     int expected[] = {TerminalEOF};
     CompileError compileError = {
         expected, sizeof(expected) / sizeof(int), token
     };
-    parser->Panic(&compileError);
+    parser->Panic(&ctx, &compileError);
     return false;
 }
 `)
+	cppBufWrite.WriteString(fmt.Sprintf(`
+#ifdef %s
+}
+#endif
+`, randomNamespace))
 }
 
 // 按照一定顺序排列非终结符

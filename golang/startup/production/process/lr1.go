@@ -532,9 +532,11 @@ func (ctx *LR1Context) GenerateYaccCode() {
  * Auto-generate header file.
  * After you re-generate file, ALL YOUR CHANGE WILL BE LOST!
  */
+
+ #include <vector>
 `)
 	// 随机命名空间
-	randomNamespace := fmt.Sprintf("LR1_%d_%d", rand.Int(), rand.Int())
+	randomNamespace := fmt.Sprintf("LR0_%d_%d", rand.Int(), rand.Int())
 	headBufWrite.WriteString(fmt.Sprintf(`
 // By modify this macro, you can define automaton code in namespace
 // #define %s
@@ -604,15 +606,29 @@ namespace %s {
 		int Actual;
 	};
 
+	// ParserContext
+	struct ParserContext {
+		// current token
+		int* token;
+		// symbol stack (terminals and nonterminals)
+		std::vector<int> *symbolStack;
+		// state stack
+		std::vector<int> *stateStack;
+	};
+
 	// Interface which can be easily defined by user
 	class IParser {
 	public:
 		// Read a terminal from lexer. If no more terminals, return TerminalEOF(-1)
 		virtual int Next() = 0;
+		// LR Shift
+		virtual void Shift() = 0;
 		// Reduce by production
 		virtual void Reduce(int id) = 0;
-		// Error occurred when parse (parser will exit)
-		virtual void Panic(CompileError* error) = 0;
+		// Error occurred when parse
+		// return true means panic has been recovered;
+		// return false means panic cannot be recovered (parse function will return)
+		virtual bool Panic(ParserContext* ctx, CompileError* error) = 0;
 	};
 
 	// main entry parser
@@ -632,30 +648,17 @@ namespace %s {
  * all your change WILL BE LOST after you re-generate file.
  */
 #include "%s"
-#include <vector>
 `, ctx.GetIncludeName()))
 	cppBufWrite.WriteString(fmt.Sprintf(`
-#ifdef %s
-using namespace %s;
-#endif
 
 #ifdef %s
-bool %s::Parse(IParser* parser)
-#else
-bool Parse(IParser* parser)
+namespace %s {
 #endif
-`, randomNamespace, randomNamespace, randomNamespace, randomNamespace))
-	cppBufWrite.WriteString(`{
-	std::vector<int> stateStack;
-	std::vector<int> symbolStack;
-	stateStack.push_back(0);
-	int token = parser->Next();
-	while (true) {
-		switch (stateStack.back()) {
-`)
+`, randomNamespace, randomNamespace))
+
 	for state := range ctx.KeyVariables.ClosureMap.Closures {
-		cppBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
-		cppBufWrite.WriteString("\t\t\t\tswitch (token) {\n")
+		cppBufWrite.WriteString(fmt.Sprintf("\ninline int parse_action_%d(ParserContext* ctx, IParser* parser, bool* result) {\n", state))
+		cppBufWrite.WriteString("\tswitch (*ctx->token) {\n")
 		allSelect := make([]string, 0)
 		// action
 		for terminal, action := range ctx.KeyVariables.ActionTable[state] {
@@ -664,40 +667,41 @@ bool Parse(IParser* parser)
 			}
 			if terminal == "$" {
 				allSelect = append(allSelect, "TerminalEOF")
-				cppBufWrite.WriteString("\t\t\t\t\tcase TerminalEOF:\n")
+				cppBufWrite.WriteString("\t\tcase TerminalEOF:\n")
 			} else {
 				allSelect = append(allSelect, fmt.Sprintf("Terminal_%s", serials.Map[terminal].SerialString))
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Terminal_%s:\n", serials.Map[terminal].SerialString))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\tcase Terminal_%s:\n", serials.Map[terminal].SerialString))
 			}
-			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\t// %s\n", action))
+			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t// %s\n", action))
 			switch action[0] {
 			case 'a': // acc
 				// 归约开始产生式
 				prod := (*ctx.KeyVariables.ClosureMap.Closures[0])[0].Prod
 				count := len(ctx.KeyVariables.Productions[prod]) - 1
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser->Reduce(%d);\n", prod))
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.erase(stateStack.end() - %d, stateStack.end());\n", count))
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack.erase(symbolStack.end() - %d, symbolStack.end());\n", count))
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack.push_back(Nonterminal_%s);\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
-				cppBufWrite.WriteString("\t\t\t\t\t\treturn true;\n")
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tparser->Reduce(%d);\n", prod))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->stateStack->erase(ctx->stateStack->end() - %d, ctx->stateStack->end());\n", count))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->symbolStack->erase(ctx->symbolStack->end() - %d, ctx->symbolStack->end());\n", count))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->symbolStack->push_back(Nonterminal_%s);\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
+				cppBufWrite.WriteString("\t\t\treturn 1;\n")
 			case 's':
 				// 移入，并转移到其他状态
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.push_back(%s);\n", action[1:]))
-				cppBufWrite.WriteString("\t\t\t\t\t\tsymbolStack.push_back(token);\n")
-				cppBufWrite.WriteString("\t\t\t\t\t\ttoken = parser->Next();\n")
-				cppBufWrite.WriteString("\t\t\t\t\t\tcontinue;\n")
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->stateStack->push_back(%s);\n", action[1:]))
+				cppBufWrite.WriteString("\t\t\tctx->symbolStack->push_back(*ctx->token);\n")
+				cppBufWrite.WriteString("\t\t\tparser->Shift();\n")
+				cppBufWrite.WriteString("\t\t\t*ctx->token = parser->Next();\n")
+				cppBufWrite.WriteString("\t\t\treturn 0;\n")
 			case 'r':
 				// 归约
 				prod, _ := strconv.Atoi(action[1:])
 				count := len(ctx.KeyVariables.Productions[prod]) - 1
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tparser->Reduce(%s);\n", action[1:]))
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.erase(stateStack.end() - %d, stateStack.end());\n", count))
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack.erase(symbolStack.end() - %d, symbolStack.end());\n", count))
-				cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tsymbolStack.push_back(Nonterminal_%s);\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
-				cppBufWrite.WriteString("\t\t\t\t\t\tbreak;\n")
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tparser->Reduce(%s);\n", action[1:]))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->stateStack->erase(ctx->stateStack->end() - %d, ctx->stateStack->end());\n", count))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->symbolStack->erase(ctx->symbolStack->end() - %d, ctx->symbolStack->end());\n", count))
+				cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->symbolStack->push_back(Nonterminal_%s);\n", serials.Map[ctx.KeyVariables.Productions[prod][0]].SerialString))
+				cppBufWrite.WriteString("\t\t\treturn 2;\n")
 			}
 		}
-		cppBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\tint expected[] = {")
+		cppBufWrite.WriteString("\t\tdefault: {\n\t\t\tint expected[] = {")
 		for i, v := range allSelect {
 			if i > 0 {
 				cppBufWrite.WriteString(", ")
@@ -705,24 +709,24 @@ bool Parse(IParser* parser)
 			cppBufWrite.WriteString(v)
 		}
 		cppBufWrite.WriteString(`};
-						CompileError compileError = {
-							expected, sizeof(expected) / sizeof(int), token
-						};
-						parser->Panic(&compileError);
-						return false;
-					}
-				}
-				break;
+			CompileError compileError = {
+				expected, sizeof(expected) / sizeof(int), *ctx->token
+			};
+			*result = false;
+			return parser->Panic(ctx, &compileError) ? 0 : 1;
+		}
+	}
+}
 `)
 	}
-	cppBufWrite.WriteString("\t\t}\n")
-	cppBufWrite.WriteString("\t\tswitch (stateStack.back()) {\n")
+
 	for state := range ctx.KeyVariables.ClosureMap.Closures {
 		if !ctx.checkGotoTableAvailable(state) {
 			continue
 		}
-		cppBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
-		cppBufWrite.WriteString("\t\t\t\tswitch (symbolStack.back()) {\n")
+		cppBufWrite.WriteString(fmt.Sprintf("\ninline int parse_goto_%d(ParserContext* ctx, IParser* parser, bool* result) {\n", state))
+
+		cppBufWrite.WriteString("\tswitch (ctx->symbolStack->back()) {\n")
 		allSelect := make([]string, 0)
 		// goto
 		for terminal, nextState := range ctx.KeyVariables.GotoTable[state] {
@@ -730,11 +734,11 @@ bool Parse(IParser* parser)
 				continue
 			}
 			allSelect = append(allSelect, fmt.Sprintf("Nonterminal_%s", serials.Map[terminal].SerialString))
-			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\tcase Nonterminal_%s:\n", serials.Map[terminal].SerialString))
-			cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\t\t\tstateStack.push_back(%d);\n", nextState))
-			cppBufWrite.WriteString("\t\t\t\t\t\tbreak;\n")
+			cppBufWrite.WriteString(fmt.Sprintf("\t\tcase Nonterminal_%s:\n", serials.Map[terminal].SerialString))
+			cppBufWrite.WriteString(fmt.Sprintf("\t\t\tctx->stateStack->push_back(%d);\n", nextState))
+			cppBufWrite.WriteString("\t\t\tbreak;\n")
 		}
-		cppBufWrite.WriteString("\t\t\t\t\tdefault: {\n\t\t\t\t\t\tint expected[] = {")
+		cppBufWrite.WriteString("\t\tdefault: {\n\t\t\tint expected[] = {")
 		for i, v := range allSelect {
 			if i > 0 {
 				cppBufWrite.WriteString(", ")
@@ -742,27 +746,70 @@ bool Parse(IParser* parser)
 			cppBufWrite.WriteString(v)
 		}
 		cppBufWrite.WriteString(`};
-						CompileError compileError = {
-							expected, sizeof(expected) / sizeof(int), stateStack.back()
-						};
-						parser->Panic(&compileError);
-						return false;
-					}
-				}
-				break;
+			CompileError compileError = {
+				expected, sizeof(expected) / sizeof(int), ctx->stateStack->back()
+			};
+			return parser->Panic(ctx, &compileError) ? 1 : 0;
+		}
+	}
+	return 1;
+}
 `)
+	}
+
+	cppBufWrite.WriteString(`
+bool Parse(IParser* parser) {
+	std::vector<int> stateStack;
+	std::vector<int> symbolStack;
+	stateStack.push_back(0);
+	int token = parser->Next();
+	ParserContext ctx = { &token, &symbolStack, &stateStack };
+	bool result = true;
+	while (true) {
+		int action = 0;
+		switch (stateStack.back()) {
+`)
+	for state := range ctx.KeyVariables.ClosureMap.Closures {
+		cppBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
+		cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\taction = parse_action_%d(&ctx, parser, &result);\n\t\t\t\tbreak;\n", state))
+	}
+	cppBufWrite.WriteString("\t\t}\n")
+	cppBufWrite.WriteString(`
+		if (action == 0) {
+			continue;
+		} else if (action == 1) {
+			return result;
+		}
+`)
+	cppBufWrite.WriteString("\t\tswitch (stateStack.back()) {\n")
+	for state := range ctx.KeyVariables.ClosureMap.Closures {
+		if !ctx.checkGotoTableAvailable(state) {
+			continue
+		}
+		cppBufWrite.WriteString(fmt.Sprintf("\t\t\tcase %d:\n", state))
+		cppBufWrite.WriteString(fmt.Sprintf("\t\t\t\taction = parse_goto_%d(&ctx, parser, &result);\n\t\t\t\tbreak;\n", state))
+
 	}
 	cppBufWrite.WriteString(`			default: {
 				int expected[] = {};
 				CompileError compileError = {
 					expected, 0, stateStack.back()
 				};
-				parser->Panic(&compileError);
-				return false;
+				action = parser->Panic(&ctx, &compileError);
+				result = false;
 			}
+		}
+		if (action == 0) {
+			return result;
 		}
 	}
 }`)
+
+	cppBufWrite.WriteString(fmt.Sprintf(`
+#ifdef %s
+}
+#endif
+`, randomNamespace))
 }
 
 func (ctx *LR1Context) GenerateGolangYaccCode() {
