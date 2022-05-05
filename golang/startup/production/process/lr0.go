@@ -104,6 +104,7 @@ func (ctx *LR0Context) RunPipeline() {
 		ctx.ComputeFirstSet()
 		ctx.ComputeFollowSet()
 	}
+	ctx.sortNonterminals()
 	// 计算项目集闭包
 	ctx.ComputeItemClosure()
 	// 生成自动机

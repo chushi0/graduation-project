@@ -12,15 +12,13 @@ import (
 func TestLR0ItemClosure(t *testing.T) {
 	ctx := process.NewLR0Context()
 	ctx.Code = `
-	S := E
-	E := E + T
-	E := T
-	T := T * F
-	T := F
-	F := id
-	F := (E)
+	@S'
+	S' := S
+	S := B B
+	B := b B
+	B := a
 	`
-	ctx.SLR = true
+	ctx.SLR = false
 	ctx.CodeSaver.Enable = true
 	ctx.CodeSaver.SavePath = "F:\\test.h"
 	ctx.CodeSaver.Normalize()
