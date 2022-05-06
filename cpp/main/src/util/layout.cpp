@@ -82,6 +82,11 @@ static bool findSpaceVertical(Env env, int fromX, int toX, int fromY, int toY,
 	if (toY < fromY) {
 		std::swap(toY, fromY);
 	}
+	for (auto &point : (*env.points)) {
+		if (point.y <= toY && point.y + point.height >= fromY) {
+			set.remove(point.x + point.width);
+		}
+	}
 	for (auto &edge : (*env.edges)) {
 		if (edge.keyPointCount == 4) {
 			if (set.contains(edge.keyPointX[1])) {
@@ -93,6 +98,11 @@ static bool findSpaceVertical(Env env, int fromX, int toX, int fromY, int toY,
 				}
 				if (toY >= y1 && fromY <= y2) {
 					set.remove(edge.keyPointX[1]);
+				}
+			}
+			if (fromY == edge.keyPointY[1] || toY == edge.keyPointY[1]) {
+				for (int i = fromX; i <= edge.keyPointX[1]; i++) {
+					set.remove(i);
 				}
 			}
 		} else if (edge.keyPointCount == 6) {
@@ -114,6 +124,11 @@ static bool findSpaceVertical(Env env, int fromX, int toX, int fromY, int toY,
 				}
 				if (toY >= y1 && fromY <= y2) {
 					set.remove(edge.keyPointX[3]);
+				}
+			}
+			if (fromY == edge.keyPointY[1] || toY == edge.keyPointY[1]) {
+				for (int i = fromX; i <= edge.keyPointX[1]; i++) {
+					set.remove(i);
 				}
 			}
 		}
@@ -162,10 +177,10 @@ static void lineToRight(Env env, layout::Edge &edge, int ox, int oy, int ix,
 	}
 
 	int vx;
-	if (!findSpaceVertical(env, ox + 1, ix - 1, oy, iy, vx)) {
+	while (!findSpaceVertical(env, ox + 1, ix - 1, oy, iy, vx)) {
+		shiftRight(env, ix - 1);
 		shiftRight(env, ox);
-		ix++;
-		findSpaceVertical(env, ox + 1, ix - 1, oy, iy, vx);
+		ix += 2;
 	}
 
 	edge.keyPointCount = 4;
@@ -198,11 +213,11 @@ static void lineToTopLeft(Env env, layout::Edge &edge, int ox, int oy, int ix,
 		xmin += width;
 	}
 
-	if (!findSpaceVertical(env, xmin + 1, ix - 1, 0, iy, x2)) {
+	while (!findSpaceVertical(env, xmin + 1, ix - 1, 0, iy, x2)) {
+		shiftRight(env, ix - 1);
 		shiftRight(env, xmin);
-		ix++;
-		ox++;
-		findSpaceVertical(env, xmin + 1, ix - 1, 0, iy, x2);
+		ix += 2;
+		ox += 2;
 	}
 
 	int xmax = (*env.depthX)[(*env.points)[edge.from].depth + 1];
@@ -211,10 +226,10 @@ static void lineToTopLeft(Env env, layout::Edge &edge, int ox, int oy, int ix,
 		(*env.depthX)[(*env.points)[edge.from].depth + 1] = xmax;
 	}
 
-	if (!findSpaceVertical(env, ox + 1, xmax - 1, 0, oy, x1)) {
+	while (!findSpaceVertical(env, ox + 1, xmax - 1, 0, oy, x1)) {
+		shiftRight(env, xmax - 1);
 		shiftRight(env, ox);
-		xmax += 1;
-		findSpaceVertical(env, ox + 1, xmax - 1, 0, oy, x1);
+		xmax += 2;
 	}
 
 	findSpaceHorizontal(env, x2, x1, y1);
