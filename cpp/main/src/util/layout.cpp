@@ -100,8 +100,15 @@ static bool findSpaceVertical(Env env, int fromX, int toX, int fromY, int toY,
 					set.remove(edge.keyPointX[1]);
 				}
 			}
-			if (fromY == edge.keyPointY[1] || toY == edge.keyPointY[1]) {
-				for (int i = fromX; i <= edge.keyPointX[1]; i++) {
+			if ((fromY != -1 && fromY == edge.keyPointY[1]) ||
+				toY == edge.keyPointY[1]) {
+				for (int i = edge.keyPointX[0]; i <= edge.keyPointX[1]; i++) {
+					set.remove(i);
+				}
+			}
+			if ((fromY != -1 && fromY == edge.keyPointY[2]) ||
+				toY == edge.keyPointY[2]) {
+				for (int i = edge.keyPointX[2]; i <= edge.keyPointX[3]; i++) {
 					set.remove(i);
 				}
 			}
@@ -126,8 +133,15 @@ static bool findSpaceVertical(Env env, int fromX, int toX, int fromY, int toY,
 					set.remove(edge.keyPointX[3]);
 				}
 			}
-			if (fromY == edge.keyPointY[1] || toY == edge.keyPointY[1]) {
-				for (int i = fromX; i <= edge.keyPointX[1]; i++) {
+			if ((fromY != -1 && fromY == edge.keyPointY[1]) ||
+				toY == edge.keyPointY[1]) {
+				for (int i = edge.keyPointX[0]; i <= edge.keyPointX[1]; i++) {
+					set.remove(i);
+				}
+			}
+			if ((fromY != -1 && fromY == edge.keyPointY[2]) ||
+				toY == edge.keyPointY[2]) {
+				for (int i = edge.keyPointX[2]; i <= edge.keyPointX[3]; i++) {
 					set.remove(i);
 				}
 			}
@@ -137,6 +151,9 @@ static bool findSpaceVertical(Env env, int fromX, int toX, int fromY, int toY,
 		return false;
 	}
 	outX = *set.begin();
+	for (auto i : set) {
+		outX = std::min(outX, i);
+	}
 	return true;
 }
 
@@ -181,6 +198,7 @@ static void lineToRight(Env env, layout::Edge &edge, int ox, int oy, int ix,
 		shiftRight(env, ix - 1);
 		shiftRight(env, ox);
 		ix += 2;
+		// findSpaceVertical(env, ox + 1, ix - 1, oy, iy, vx);
 	}
 
 	edge.keyPointCount = 4;
@@ -208,16 +226,19 @@ static void lineToTopLeft(Env env, layout::Edge &edge, int ox, int oy, int ix,
 		xmin = (*env.depthX)[(*env.points)[edge.to].depth - 1];
 		int width = 0;
 		for (auto &point : *env.points) {
-			width = std::max(width, point.width);
+			if (point.depth == (*env.points)[edge.to].depth) {
+				width = std::max(width, point.width);
+			}
 		}
 		xmin += width;
 	}
 
-	while (!findSpaceVertical(env, xmin + 1, ix - 1, 0, iy, x2)) {
+	while (!findSpaceVertical(env, xmin + 1, ix - 1, -1, iy, x2)) {
 		shiftRight(env, ix - 1);
 		shiftRight(env, xmin);
 		ix += 2;
 		ox += 2;
+		// findSpaceVertical(env, xmin + 1, ix - 1, 0, iy, x2);
 	}
 
 	int xmax = (*env.depthX)[(*env.points)[edge.from].depth + 1];
@@ -226,10 +247,11 @@ static void lineToTopLeft(Env env, layout::Edge &edge, int ox, int oy, int ix,
 		(*env.depthX)[(*env.points)[edge.from].depth + 1] = xmax;
 	}
 
-	while (!findSpaceVertical(env, ox + 1, xmax - 1, 0, oy, x1)) {
+	while (!findSpaceVertical(env, ox + 1, xmax - 1, -1, oy, x1)) {
 		shiftRight(env, xmax - 1);
 		shiftRight(env, ox);
 		xmax += 2;
+		// findSpaceVertical(env, ox + 1, xmax - 1, 0, oy, x1);
 	}
 
 	findSpaceHorizontal(env, x2, x1, y1);
